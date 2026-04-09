@@ -1,0 +1,42 @@
+table: ai_analyses
+description: AI analysis results linked to news or economic events
+database: postgresql
+datasource: primary
+
+fields:
+  - name: id
+    type: bigserial
+    description: Primary key
+    primary_key: true
+  - name: ref_type
+    type: varchar(20)
+    description: "Reference type: news, economic_event, question"
+  - name: ref_id
+    type: bigint
+    description: Foreign key to the referenced entity (nullable for questions)
+  - name: prompt
+    type: text
+    description: Prompt sent to LLM
+  - name: response
+    type: text
+    description: Raw LLM response
+  - name: model
+    type: varchar(50)
+    description: LLM model used (claude-sonnet-4-20250514, gpt-4o, etc.)
+  - name: tokens_used
+    type: integer
+    description: Total tokens consumed
+  - name: latency_ms
+    type: integer
+    description: LLM response latency in milliseconds
+  - name: created_at
+    type: timestamptz
+    description: Analysis timestamp
+
+indexes:
+  - name: idx_ai_ref
+    fields: [ref_type, ref_id]
+    description: Look up analyses by referenced entity
+  - name: idx_ai_created
+    fields: [created_at]
+    description: Chronological listing

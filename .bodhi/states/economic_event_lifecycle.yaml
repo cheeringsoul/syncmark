@@ -1,0 +1,25 @@
+name: economic_event_lifecycle
+entity: economic_events
+field: status
+description: Economic event lifecycle from scheduled to data published
+
+states:
+  - id: SCHEDULED
+    value: 0
+    description: Event in calendar, publication time known
+    transitions:
+      - target: UPCOMING
+        trigger: Within pre-publication window (e.g. 5 minutes before scheduled_at)
+        fn: MacroScheduler.markUpcoming
+
+  - id: UPCOMING
+    value: 1
+    description: Approaching publication, high-frequency polling active
+    transitions:
+      - target: PUBLISHED
+        trigger: Actual data value detected
+        fn: MacroCollector.onDataPublished
+
+  - id: PUBLISHED
+    value: 2
+    description: Actual value available, AI analysis triggered

@@ -1,0 +1,41 @@
+version: "0.1.1"
+project:
+  name: "syncmark"
+  description: "Crypto intelligence platform — aggregates Telegram, CEX, on-chain, and macro data with AI analysis for iOS clients"
+  languages: [go, python]
+  frameworks: [gin, gorilla-websocket, gotd-td, go-ethereum, redis-streams, sqlalchemy, fastapi]
+
+distributed:
+  system: "syncmark"
+  services:
+    - name: collector
+      language: go
+      description: "Data collection — Telegram, CEX WebSocket, on-chain, macro indicators"
+    - name: analyzer
+      language: python
+      description: "AI analysis — consumes Redis Stream, calls LLM, writes results"
+    - name: api-server
+      language: go
+      description: "REST API + WebSocket — serves iOS client"
+
+runtime:
+  logs:
+    - name: collector-log
+      type: file
+      path: logs/collector.log
+      format: json
+      timestamp_field: ts
+      message_field: msg
+    - name: analyzer-log
+      type: file
+      path: logs/analyzer.log
+      format: json
+      timestamp_field: timestamp
+      message_field: message
+    - name: api-server-log
+      type: file
+      path: logs/api-server.log
+      format: json
+      timestamp_field: ts
+      message_field: msg
+  time_window: 30s

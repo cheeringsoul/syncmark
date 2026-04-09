@@ -1,0 +1,45 @@
+table: telegram_messages
+description: Raw messages captured from Telegram channels/groups via MTProto
+database: postgresql
+datasource: primary
+
+fields:
+  - name: id
+    type: bigserial
+    description: Primary key
+    primary_key: true
+  - name: channel_id
+    type: bigint
+    description: Telegram channel/group numeric ID
+  - name: channel_name
+    type: varchar(255)
+    description: Channel display name
+  - name: message_id
+    type: bigint
+    description: Telegram message ID within the channel
+  - name: text
+    type: text
+    description: Message text content
+  - name: media_type
+    type: varchar(20)
+    description: "Type of attached media: photo, video, document, none"
+  - name: media_url
+    type: text
+    description: URL or file reference for attached media
+  - name: raw_json
+    type: jsonb
+    description: Full raw message payload for future reprocessing
+  - name: received_at
+    type: timestamptz
+    description: Timestamp when message was received by collector
+  - name: telegram_date
+    type: timestamptz
+    description: Original message timestamp from Telegram
+
+indexes:
+  - name: idx_tgmsg_channel_date
+    fields: [channel_id, telegram_date]
+    description: Query messages by channel in time order
+  - name: idx_tgmsg_received
+    fields: [received_at]
+    description: Chronological consumption ordering

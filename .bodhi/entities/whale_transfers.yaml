@@ -1,0 +1,58 @@
+table: whale_transfers
+description: Large on-chain transfers by labeled whale addresses
+database: postgresql
+datasource: primary
+
+fields:
+  - name: id
+    type: bigserial
+    description: Primary key
+    primary_key: true
+  - name: chain
+    type: varchar(20)
+    description: "Blockchain: ethereum, solana"
+  - name: tx_hash
+    type: varchar(128)
+    description: Transaction hash
+  - name: from_address
+    type: varchar(128)
+    description: Sender address
+  - name: from_label
+    type: varchar(100)
+    description: Sender label (e.g. Jump Trading, Binance Hot Wallet)
+  - name: to_address
+    type: varchar(128)
+    description: Recipient address
+  - name: to_label
+    type: varchar(100)
+    description: Recipient label
+  - name: token
+    type: varchar(20)
+    description: Token symbol (ETH, SOL, USDT, etc.)
+  - name: amount
+    type: numeric(30,8)
+    description: Transfer amount in token units
+  - name: value_usd
+    type: numeric(20,2)
+    description: USD value at time of transfer
+  - name: timestamp
+    type: timestamptz
+    description: On-chain transaction timestamp
+  - name: created_at
+    type: timestamptz
+    description: When record was ingested
+
+indexes:
+  - name: idx_whale_chain_time
+    fields: [chain, timestamp]
+    description: Query by chain in time order
+  - name: idx_whale_token_value
+    fields: [token, value_usd]
+    description: Filter large transfers by token
+  - name: idx_whale_from_label
+    fields: [from_label, timestamp]
+    description: Track specific entity outflows
+  - name: idx_whale_tx_hash
+    fields: [tx_hash]
+    unique: true
+    description: Deduplicate by transaction hash

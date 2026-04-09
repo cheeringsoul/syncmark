@@ -1,0 +1,61 @@
+table: economic_events
+description: Macro economic calendar events (CPI, NFP, rate decisions, etc.)
+database: postgresql
+datasource: primary
+
+fields:
+  - name: id
+    type: bigserial
+    description: Primary key
+    primary_key: true
+  - name: event_id
+    type: varchar(100)
+    description: External unique identifier (e.g. us_cpi_202604)
+    unique: true
+  - name: name
+    type: varchar(255)
+    description: Event display name
+  - name: country
+    type: varchar(5)
+    description: Country code (US, CN, EU, etc.)
+  - name: importance
+    type: varchar(10)
+    description: "Importance: high, medium, low"
+  - name: scheduled_at
+    type: timestamptz
+    description: Scheduled publication time
+  - name: previous
+    type: varchar(50)
+    description: Previous period value
+  - name: forecast
+    type: varchar(50)
+    description: Market consensus forecast
+  - name: actual
+    type: varchar(50)
+    description: Actual published value (null until published)
+  - name: status
+    type: smallint
+    description: Event lifecycle status
+    state_machine: economic_event_lifecycle
+    enum:
+      0: SCHEDULED
+      1: UPCOMING
+      2: PUBLISHED
+  - name: ai_analysis
+    type: text
+    description: AI-generated impact analysis (filled after publication)
+  - name: updated_at
+    type: timestamptz
+    description: Last update time
+
+indexes:
+  - name: idx_econ_scheduled
+    fields: [scheduled_at, importance]
+    description: Calendar view sorted by time and importance
+  - name: idx_econ_status
+    fields: [status, scheduled_at]
+    description: Filter by lifecycle status
+  - name: uq_econ_event_id
+    fields: [event_id]
+    unique: true
+    description: Deduplicate by external event ID

@@ -1,0 +1,36 @@
+name: news_lifecycle
+entity: news
+field: status
+description: News processing pipeline from raw ingestion to client publication
+
+states:
+  - id: RAW
+    value: 0
+    description: Raw message received from source, not yet processed
+    transitions:
+      - target: ANALYZING
+        trigger: Analyzer picks up message for AI processing
+        fn: NewsAnalyzer.analyze
+
+  - id: ANALYZING
+    value: 1
+    description: AI analysis in progress
+    transitions:
+      - target: ANALYZED
+        trigger: AI analysis completed successfully
+        fn: NewsAnalyzer.onAnalysisComplete
+      - target: RAW
+        trigger: AI analysis failed, retry later
+        fn: NewsAnalyzer.onAnalysisFailure
+
+  - id: ANALYZED
+    value: 2
+    description: AI analysis complete, ready for publication
+    transitions:
+      - target: PUBLISHED
+        trigger: Pushed to client via WebSocket or API
+        fn: NewsPublisher.publish
+
+  - id: PUBLISHED
+    value: 3
+    description: Visible to clients

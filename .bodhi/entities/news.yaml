@@ -1,0 +1,71 @@
+table: news
+description: Parsed crypto news with AI-generated analysis
+database: postgresql
+datasource: primary
+
+fields:
+  - name: id
+    type: bigserial
+    description: Primary key
+    primary_key: true
+  - name: source_type
+    type: varchar(20)
+    description: "Origin: telegram, rss, manual"
+  - name: source_message_id
+    type: bigint
+    description: Foreign key to telegram_messages.id (nullable for non-telegram sources)
+  - name: title
+    type: varchar(500)
+    description: Extracted or generated headline
+  - name: content
+    type: text
+    description: Full news content
+  - name: ai_summary
+    type: text
+    description: AI-generated one-line interpretation
+  - name: sentiment
+    type: varchar(10)
+    description: "AI sentiment label: bullish, bearish, neutral"
+  - name: related_symbols
+    type: varchar(255)[]
+    description: Coins mentioned or affected (e.g. BTC, ETH)
+  - name: importance
+    type: varchar(10)
+    description: "Importance level: high, medium, low"
+  - name: status
+    type: smallint
+    description: Processing status
+    state_machine: news_lifecycle
+    enum:
+      0: RAW
+      1: ANALYZING
+      2: ANALYZED
+      3: PUBLISHED
+  - name: analyzed_at
+    type: timestamptz
+    description: When AI analysis completed
+  - name: published_at
+    type: timestamptz
+    description: When pushed to clients
+  - name: created_at
+    type: timestamptz
+    description: Record creation time
+
+indexes:
+  - name: idx_news_status_created
+    fields: [status, created_at]
+    description: Query news by status in time order
+  - name: idx_news_published
+    fields: [published_at]
+    description: Client-facing chronological listing
+  - name: idx_news_sentiment
+    fields: [sentiment, published_at]
+    description: Filter by sentiment
+
+relations:
+  - target: telegram_messages
+    type: many_to_one
+    join: news.source_message_id = telegram_messages.id
+  - target: ai_analyses
+    type: one_to_many
+    join: news.id = ai_analyses.ref_id (where ref_type = 'news')

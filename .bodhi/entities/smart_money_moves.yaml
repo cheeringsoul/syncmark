@@ -1,0 +1,52 @@
+table: smart_money_moves
+description: Tracked smart money address buy/sell activity
+database: postgresql
+datasource: primary
+
+fields:
+  - name: id
+    type: bigserial
+    description: Primary key
+    primary_key: true
+  - name: chain
+    type: varchar(20)
+    description: "Blockchain: ethereum, solana"
+  - name: address
+    type: varchar(128)
+    description: Smart money wallet address
+  - name: label
+    type: varchar(100)
+    description: Address label/identity
+  - name: action
+    type: varchar(10)
+    description: "Action type: buy, sell, transfer"
+  - name: token
+    type: varchar(20)
+    description: Token symbol
+  - name: amount
+    type: numeric(30,8)
+    description: Token amount
+  - name: value_usd
+    type: numeric(20,2)
+    description: USD value at time of action
+  - name: tx_hash
+    type: varchar(128)
+    description: Transaction hash
+  - name: timestamp
+    type: timestamptz
+    description: On-chain transaction timestamp
+  - name: created_at
+    type: timestamptz
+    description: Ingestion time
+
+indexes:
+  - name: idx_sm_token_time
+    fields: [token, timestamp]
+    description: Track smart money activity per token
+  - name: idx_sm_address_time
+    fields: [address, timestamp]
+    description: Track individual smart money address
+  - name: idx_sm_tx_hash
+    fields: [tx_hash]
+    unique: true
+    description: Deduplicate by transaction hash

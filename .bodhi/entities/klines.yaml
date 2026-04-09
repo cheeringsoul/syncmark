@@ -1,0 +1,52 @@
+table: klines
+description: Candlestick (K-line) data from CEX exchanges
+database: postgresql
+datasource: primary
+
+fields:
+  - name: id
+    type: bigserial
+    description: Primary key
+    primary_key: true
+  - name: exchange
+    type: varchar(20)
+    description: "Exchange name: binance, okx"
+  - name: symbol
+    type: varchar(20)
+    description: Trading pair (e.g. BTCUSDT)
+  - name: interval
+    type: varchar(5)
+    description: "Candle interval: 1m, 5m, 15m, 1h, 4h, 1d"
+  - name: open_time
+    type: timestamptz
+    description: Candle open timestamp
+  - name: open
+    type: numeric(20,8)
+    description: Open price
+  - name: high
+    type: numeric(20,8)
+    description: High price
+  - name: low
+    type: numeric(20,8)
+    description: Low price
+  - name: close
+    type: numeric(20,8)
+    description: Close price
+  - name: volume
+    type: numeric(30,8)
+    description: Base asset volume
+  - name: quote_volume
+    type: numeric(30,8)
+    description: Quote asset volume (USD value)
+  - name: close_time
+    type: timestamptz
+    description: Candle close timestamp
+
+indexes:
+  - name: uq_kline
+    fields: [exchange, symbol, interval, open_time]
+    unique: true
+    description: Unique candle per exchange/symbol/interval/time
+  - name: idx_kline_symbol_time
+    fields: [symbol, interval, open_time]
+    description: Query candles for charting
