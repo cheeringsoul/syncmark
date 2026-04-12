@@ -546,5 +546,14 @@ if [[ "$FILE_PATH" =~ \.(java|py|go|ts|js|tsx|kt)$ ]] || [[ "$FILE_PATH" =~ /\.b
             echo "$OUTPUT"
             exit 1
         fi
+
+        CHECK_OUTPUT=$(bodhi check "$PROJECT_ROOT" 2>&1)
+        CHECK_EXIT=$?
+
+        if [ $CHECK_EXIT -ne 0 ]; then
+            echo "⚠ Bodhi DSL consistency check failed — inline tags and YAML are out of sync:"
+            echo "$CHECK_OUTPUT"
+            exit 1
+        fi
     fi
 fi

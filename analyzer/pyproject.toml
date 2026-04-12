@@ -1,0 +1,27 @@
+[project]
+name = "syncmark-analyzer"
+version = "0.1.0"
+description = "AI analysis service for SyncMark — consumes Redis Streams and runs LLM analysis"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "sqlalchemy[asyncio]>=2.0.28",
+    "asyncpg>=0.29.0",
+    "redis>=5.0.3",
+    "anthropic>=0.25.0",
+    "structlog>=24.1.0",
+    "pyyaml>=6.0.1",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["analyzer*"]
+
+[project.scripts]
+syncmark-analyzer = "analyzer.main:cli"

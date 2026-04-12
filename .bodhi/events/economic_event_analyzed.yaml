@@ -1,0 +1,31 @@
+# REGISTRY_SYNC_NEEDED
+name: economic_event_analyzed
+description: Economic event published with AI impact analysis attached
+channel: redis:economic:analyzed
+producers:
+  - fn: RedisPublisher.publish_economic_analyzed
+    service: analyzer
+    flow: economic_pipeline
+consumers:
+  - fn: EconomicWsHandler.broadcast
+    service: api-server
+    description: Push to clients via WebSocket
+schema:
+  - field: event_id
+    type: string
+  - field: name
+    type: string
+  - field: country
+    type: string
+  - field: actual
+    type: string
+  - field: forecast
+    type: string
+  - field: previous
+    type: string
+  - field: ai_analysis
+    type: string
+  - field: importance
+    type: string
+  - field: published_at
+    type: timestamp

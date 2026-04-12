@@ -1,0 +1,32 @@
+name: large_order_pipeline
+description: Consume CEX large orders, enrich with spot price deviation, classify severity, publish alert
+service: analyzer
+entry: LargeOrderConsumer.run
+
+steps:
+  - fn: LargeOrderConsumer.run
+    intent: Long-running XREADGROUP loop on large orders stream
+    consumes:
+      - cex_large_order from redis:cex:large_orders
+    calls:
+      - LargeOrderPipeline.handle
+
+  - fn: LargeOrderPipeline.handle
+    intent: Rule-based enrichment (no LLM), severity classification, publish
+    consumes:
+      - cex_large_order from redis:cex:large_orders
+    reads:
+      - redis:ticker(price)
+    calls:
+      - LargeOrderPipeline.classify_severity
+      - RedisPublisher.publish_large_order_alert
+    on_fail:
+      - missing_ticker → degrade(severity=unknown) → continue
+
+  - fn: LargeOrderPipeline.classify_severity
+    intent: Map value_usd to severity (low/medium/high/extreme)
+
+  - fn: RedisPublisher.publish_large_order_alert
+    intent: Publish enriched large_order_alert event
+    emits:
+      - large_order_alert(exchange, symbol, side, price, quantity, value_usd, severity, spot_price, deviation_pct, timestamp) to redis:alerts:large_orders

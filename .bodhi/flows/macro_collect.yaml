@@ -1,0 +1,44 @@
+name: macro_collect
+description: Macro economic data collection — calendar scraping, publish polling, dashboard refresh
+service: collector
+
+entry_point:
+  fn: Start
+  type: long_running
+
+steps:
+  - fn: Start
+    intent: Initialize cron jobs for calendar sync, publish polling, and dashboard refresh
+    reads:
+      - config(macro.calendar_cron, macro.publish_poll_interval, macro.dashboard_refresh_interval)
+    calls:
+      - syncCalendar
+      - pollPublish
+      - refreshDashboard
+
+  - fn: syncCalendar
+    intent: Scrape economic calendar from data source, upsert events to stream
+    reads:
+      - http:calendar_source(events)
+    emits:
+      - macro_economic_event(event_id, name, country, importance, scheduled_at, previous, forecast, status=SCHEDULED) to redis:macro:economic_events
+    on_fail:
+      - scrape_error → retry 3 → log
+
+  - fn: pollPublish
+    intent: During publish window, poll for actual values of upcoming economic events
+    reads:
+      - http:calendar_source(event_id, actual)
+    emits:
+      - macro_event_published(event_id, actual) to redis:macro:economic_events
+    on_fail:
+      - poll_error → log + continue
+
+  - fn: refreshDashboard
+    intent: Fetch key macro indicators and update Redis cache
+    reads:
+      - http:alternative.me/fng(value, classification)
+    writes:
+      - redis:macro:dashboard(fear_greed_index, dxy, us10y_yield, updated_at) via SET
+    on_fail:
+      - api_error → use stale data + log

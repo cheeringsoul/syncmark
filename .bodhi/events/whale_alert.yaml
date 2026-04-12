@@ -1,0 +1,39 @@
+# REGISTRY_SYNC_NEEDED
+name: whale_alert
+description: Enriched whale or smart-money on-chain movement ready for client push
+channel: redis:alerts:whales
+producers:
+  - fn: RedisPublisher.publish_whale_alert
+    service: analyzer
+    flow: whale_pipeline
+consumers:
+  - fn: WhalesWsHandler.broadcast
+    service: api-server
+    description: Push to ws/whales
+schema:
+  - field: chain
+    type: string
+  - field: kind
+    type: string
+  - field: tx_hash
+    type: string
+  - field: from_address
+    type: string
+  - field: from_label
+    type: string
+  - field: to_address
+    type: string
+  - field: to_label
+    type: string
+  - field: token
+    type: string
+  - field: amount
+    type: decimal
+  - field: value_usd
+    type: decimal
+  - field: severity
+    type: string
+  - field: direction
+    type: string
+  - field: timestamp
+    type: timestamp

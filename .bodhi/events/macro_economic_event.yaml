@@ -1,0 +1,31 @@
+# REGISTRY_SYNC_NEEDED
+name: macro_economic_event
+description: Economic calendar event (new or updated with actual value)
+channel: redis:macro:economic_events
+producers:
+  - fn: syncCalendar
+    service: collector
+    flow: macro_collect
+consumers:
+  - fn: MacroConsumer.run
+    service: analyzer
+    flow: economic_pipeline
+schema:
+  - field: event_id
+    type: string
+  - field: name
+    type: string
+  - field: country
+    type: string
+  - field: importance
+    type: string
+  - field: scheduled_at
+    type: timestamp
+  - field: previous
+    type: string
+  - field: forecast
+    type: string
+  - field: actual
+    type: string
+  - field: status
+    type: string

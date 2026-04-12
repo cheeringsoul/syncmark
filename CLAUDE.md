@@ -149,9 +149,9 @@ These are created/updated when you write the corresponding code:
 - `.bodhi/channels/<name>.yaml` — bidirectional channel definitions for WebSocket/Socket/SSE (when you add a bidirectional endpoint)
 - `.bodhi/topology/<name>.yaml` — cross-service event chain definitions (when events cross service boundaries)
 
-### Derived from inline tags (automatic via `/bodhi`)
+### Derived from inline tags (automatic)
 
-These are NOT maintained during coding. Run `/bodhi flows` or `/bodhi scan` to generate them from inline tags:
+These are NOT maintained during coding. Use `/bodhi flows` (slash command) or `bodhi derive` (CLI) to generate them from inline tags:
 
 - `.bodhi/flows/<name>.yaml` — derived from `@bodhi.calls` chains starting at entry points
 - `.bodhi/states/<name>.yaml` — derived from `@bodhi.writes table(status)` + transition logic

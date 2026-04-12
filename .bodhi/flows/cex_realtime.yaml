@@ -1,0 +1,48 @@
+name: cex_realtime
+description: CEX WebSocket data collection — ticker, kline, trades, large order detection
+service: collector
+
+entry_point:
+  fn: Start
+  type: long_running
+
+steps:
+  - fn: Start
+    intent: Initialize WebSocket connections to Binance and OKX, subscribe to market data streams
+    reads:
+      - config(cex.symbols, cex.kline_intervals, cex.large_order_threshold_usd)
+    calls:
+      - Connect
+
+  - fn: Connect
+    intent: Connect to exchange WebSocket, dispatch ticker/kline/trade messages
+    reads:
+      - config(cex.symbols, cex.kline_intervals)
+    calls:
+      - handleTicker
+      - handleKline
+      - handleTrade
+
+  - fn: handleTicker
+    intent: Process ticker update, write to Redis cache
+    reads:
+      - ws.message(symbol, price, change_24h, volume_24h, high_24h, low_24h)
+    writes:
+      - redis:ticker:{exchange}:{symbol}(price, change_24h, volume_24h, high_24h, low_24h, updated_at) via SET
+
+  - fn: handleKline
+    intent: Process kline candle, publish to stream for DB persistence
+    reads:
+      - ws.message(symbol, interval, open, high, low, close, volume, open_time, close_time)
+    emits:
+      - cex_kline(exchange, symbol, interval, open, high, low, close, volume, quote_volume, open_time, close_time) to redis:cex:klines
+
+  - fn: handleTrade
+    intent: Process trade, detect large orders by USD threshold
+    reads:
+      - ws.message(symbol, price, quantity, side, timestamp)
+      - config(cex.large_order_threshold_usd)
+    emits:
+      - cex_large_order(exchange, symbol, side, price, quantity, value_usd, timestamp) to redis:cex:large_orders
+    on_fail:
+      - threshold_check → skip (not large enough)

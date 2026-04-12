@@ -1,0 +1,69 @@
+name: news_pipeline
+description: Consume Telegram raw messages, persist + AI analyze, publish news_analyzed for client push
+service: analyzer
+entry: TelegramConsumer.run
+
+steps:
+  - fn: TelegramConsumer.run
+    intent: Long-running XREADGROUP loop on telegram raw stream
+    consumes:
+      - telegram_raw_message from redis:telegram:raw_messages
+    calls:
+      - NewsPipeline.handle
+
+  - fn: NewsPipeline.handle
+    intent: Persist raw message, create news record, drive AI analysis, publish result
+    calls:
+      - TelegramRepo.upsert_message
+      - NewsRepo.create_raw
+      - NewsRepo.mark_analyzing
+      - NewsPipeline.run_analysis
+      - NewsRepo.mark_analyzed
+      - RedisPublisher.publish_news_analyzed
+    on_fail:
+      - llm_failure → retry 2 → degrade(rule_based_summary)
+      - db_failure → nack message → redeliver
+
+  - fn: TelegramRepo.upsert_message
+    intent: Insert telegram message row, dedupe by (channel_id, message_id)
+    writes:
+      - telegram_messages(channel_id, channel_name, message_id, text, media_type, media_url, raw_json, received_at, telegram_date) via INSERT ON CONFLICT DO NOTHING
+
+  - fn: NewsRepo.create_raw
+    intent: Create news row in RAW status linked to telegram message
+    writes:
+      - news(source_type=telegram, source_message_id, title, content, status=RAW, created_at) via INSERT
+
+  - fn: NewsRepo.mark_analyzing
+    intent: Transition news RAW to ANALYZING
+    writes:
+      - news(status=ANALYZING) via UPDATE
+
+  - fn: NewsPipeline.run_analysis
+    intent: Call LLM, build structured result, persist audit row
+    calls:
+      - LLMClient.analyze_news
+      - AiAnalysisRepo.record
+    on_fail:
+      - llm_timeout → circuit_breaker(threshold=10, window=60s) → degrade(rule_based_summary)
+      - llm_invalid_json → retry 1 → degrade(rule_based_summary)
+
+  - fn: LLMClient.analyze_news
+    intent: Call Claude with news prompt, return summary, sentiment, related_symbols
+    calls:
+      - LLMClient._call
+
+  - fn: AiAnalysisRepo.record
+    intent: Persist LLM call audit trail
+    writes:
+      - ai_analyses(ref_type=news, ref_id, prompt, response, model, tokens_used, latency_ms, created_at) via INSERT
+
+  - fn: NewsRepo.mark_analyzed
+    intent: Apply analysis fields and transition to ANALYZED
+    writes:
+      - news(ai_summary, sentiment, related_symbols, importance, status=ANALYZED, analyzed_at) via UPDATE
+
+  - fn: RedisPublisher.publish_news_analyzed
+    intent: Publish news_analyzed event for api-server to push to clients
+    emits:
+      - news_analyzed(news_id, title, ai_summary, sentiment, related_symbols, importance, analyzed_at) to redis:news:analyzed

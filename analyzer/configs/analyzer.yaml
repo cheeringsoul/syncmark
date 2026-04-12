@@ -1,0 +1,41 @@
+database:
+  dsn: "postgresql+asyncpg://syncmark:syncmark@localhost:5432/syncmark"
+  pool_size: 10
+  max_overflow: 5
+
+redis:
+  url: "redis://localhost:6379/0"
+  consumer_id: "analyzer-1"
+
+llm:
+  provider: anthropic
+  model: "claude-sonnet-4-6"
+  api_key_env: "ANTHROPIC_API_KEY"
+  timeout_seconds: 30
+  max_retries: 2
+
+streams:
+  telegram_raw: "telegram:raw_messages"
+  macro_events: "macro:economic_events"
+  cex_large_orders: "cex:large_orders"
+  chain_whales: "chain:whale_transfers"
+  chain_smart_money: "chain:smart_money"
+  dlq: "analyzer:dlq"
+
+publish:
+  news_analyzed: "news:analyzed"
+  economic_analyzed: "economic:analyzed"
+  large_order_alert: "alerts:large_orders"
+  whale_alert: "alerts:whales"
+
+server:
+  host: "0.0.0.0"
+  port: 8081
+
+thresholds:
+  large_order_high_usd: 1000000
+  large_order_extreme_usd: 5000000
+  whale_high_usd: 5000000
+  whale_extreme_usd: 20000000
+  llm_circuit_breaker_threshold: 10
+  llm_circuit_breaker_window_seconds: 60

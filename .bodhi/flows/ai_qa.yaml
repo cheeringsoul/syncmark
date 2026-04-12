@@ -1,0 +1,52 @@
+name: ai_qa
+description: Synchronous AI Q&A — api-server forwards user questions, analyzer aggregates context and calls LLM
+service: analyzer
+entry: AskController.ask
+
+steps:
+  - fn: AskController.ask
+    intent: Receive question via HTTP, orchestrate context aggregation and LLM call, return answer
+    reads:
+      - request.body(question, user_id)
+    calls:
+      - AiQaPipeline.run
+    writes:
+      - response(200, answer, sources, model, latency_ms)
+    on_fail:
+      - circuit_breaker_open → reject 429
+      - llm_failure → reject 503
+
+  - fn: AiQaPipeline.run
+    intent: Aggregate context, call LLM, persist analysis row, return answer
+    calls:
+      - ContextAggregator.collect
+      - LLMClient.qa
+      - AiAnalysisRepo.record
+    writes:
+      - response(200, answer, sources, model, latency_ms)
+    on_fail:
+      - llm_timeout → reject 503
+      - llm_rate_limited → reject 429
+
+  - fn: ContextAggregator.collect
+    intent: Pull recent 24h news, top tickers, recent macro events for prompt context
+    calls:
+      - NewsQuery.recent_analyzed
+      - EconomicRepo.recent_published
+    reads:
+      - redis:ticker(price, change_24h)
+
+  - fn: NewsQuery.recent_analyzed
+    intent: Fetch ANALYZED news rows from last N hours
+    reads:
+      - news(id, title, ai_summary, sentiment, related_symbols, published_at) WHERE status>=ANALYZED AND created_at > now() - :hours ORDER BY created_at DESC LIMIT :limit
+
+  - fn: EconomicRepo.recent_published
+    intent: Fetch latest published economic events
+    reads:
+      - economic_events(name, country, actual, forecast, previous, ai_analysis) WHERE status=PUBLISHED ORDER BY scheduled_at DESC LIMIT :limit
+
+  - fn: LLMClient.qa
+    intent: Call Claude with QA prompt under 500 chars
+    calls:
+      - LLMClient._call

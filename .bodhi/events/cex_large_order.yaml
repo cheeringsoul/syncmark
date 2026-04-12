@@ -1,0 +1,27 @@
+# REGISTRY_SYNC_NEEDED
+name: cex_large_order
+description: Large trade detected from CEX exchange exceeding USD threshold
+channel: redis:cex:large_orders
+producers:
+  - fn: handleTrade
+    service: collector
+    flow: cex_realtime
+consumers:
+  - fn: LargeOrderConsumer.run
+    service: analyzer
+    flow: large_order_pipeline
+schema:
+  - field: exchange
+    type: string
+  - field: symbol
+    type: string
+  - field: side
+    type: string
+  - field: price
+    type: decimal
+  - field: quantity
+    type: decimal
+  - field: value_usd
+    type: decimal
+  - field: timestamp
+    type: timestamp

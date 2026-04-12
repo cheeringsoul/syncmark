@@ -1,0 +1,38 @@
+name: whale_pipeline
+description: Consume on-chain whale transfers and smart money moves, classify direction, publish enriched alert
+service: analyzer
+entry: WhaleConsumer.run
+
+steps:
+  - fn: WhaleConsumer.run
+    intent: Long-running XREADGROUP loops multiplexing whale and smart-money streams
+    consumes:
+      - chain_whale_transfer from redis:chain:whale_transfers
+      - chain_smart_money from redis:chain:smart_money
+    calls:
+      - WhalePipeline.handle_transfer
+      - WhalePipeline.handle_smart_money
+
+  - fn: WhalePipeline.handle_transfer
+    intent: Classify direction (cex_inflow / cex_outflow / wallet_to_wallet) by labels, severity by value_usd, publish
+    consumes:
+      - chain_whale_transfer from redis:chain:whale_transfers
+    calls:
+      - WhalePipeline.classify
+      - RedisPublisher.publish_whale_alert
+
+  - fn: WhalePipeline.handle_smart_money
+    intent: Translate smart money buy/sell to alert format, publish
+    consumes:
+      - chain_smart_money from redis:chain:smart_money
+    calls:
+      - WhalePipeline.classify
+      - RedisPublisher.publish_whale_alert
+
+  - fn: WhalePipeline.classify
+    intent: Pure function — derive (severity, direction) from labels and value_usd
+
+  - fn: RedisPublisher.publish_whale_alert
+    intent: Publish enriched whale_alert event
+    emits:
+      - whale_alert(chain, kind, tx_hash, from_address, from_label, to_address, to_label, token, amount, value_usd, severity, direction, timestamp) to redis:alerts:whales

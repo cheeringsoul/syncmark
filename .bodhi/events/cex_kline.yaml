@@ -1,0 +1,31 @@
+# REGISTRY_SYNC_NEEDED
+name: cex_kline
+description: Candlestick data from CEX exchange
+channel: redis:cex:klines
+producers:
+  - fn: handleKline
+    service: collector
+    flow: cex_realtime
+schema:
+  - field: exchange
+    type: string
+  - field: symbol
+    type: string
+  - field: interval
+    type: string
+  - field: open
+    type: decimal
+  - field: high
+    type: decimal
+  - field: low
+    type: decimal
+  - field: close
+    type: decimal
+  - field: volume
+    type: decimal
+  - field: quote_volume
+    type: decimal
+  - field: open_time
+    type: timestamp
+  - field: close_time
+    type: timestamp

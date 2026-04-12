@@ -1,0 +1,74 @@
+# REGISTRY_SYNC_NEEDED
+name: analyzer
+description: AI analysis service — consumes Redis Streams from collector, runs LLM analysis, persists results, publishes alerts
+tech_stack: [python, fastapi, sqlalchemy, redis, anthropic]
+
+apis:
+  - protocol: http
+    method: POST
+    path: /analyze/ask
+    flow: ai_qa
+    description: Synchronous AI Q&A endpoint called by api-server
+
+  - protocol: http
+    method: GET
+    path: /healthz
+    description: Liveness probe
+
+consumes:
+  - event: telegram_raw_message
+    channel: redis:telegram:raw_messages
+    flow: news_pipeline
+    consumer_group: analyzer-news
+  - event: macro_economic_event
+    channel: redis:macro:economic_events
+    flow: economic_pipeline
+    consumer_group: analyzer-macro
+  - event: cex_large_order
+    channel: redis:cex:large_orders
+    flow: large_order_pipeline
+    consumer_group: analyzer-large-order
+  - event: chain_whale_transfer
+    channel: redis:chain:whale_transfers
+    flow: whale_pipeline
+    consumer_group: analyzer-whale
+  - event: chain_smart_money
+    channel: redis:chain:smart_money
+    flow: whale_pipeline
+    consumer_group: analyzer-smart-money
+
+produces:
+  - event: news_analyzed
+    channel: redis:news:analyzed
+  - event: economic_event_analyzed
+    channel: redis:economic:analyzed
+  - event: large_order_alert
+    channel: redis:alerts:large_orders
+  - event: whale_alert
+    channel: redis:alerts:whales
+
+depends_on:
+  - service: redis
+    type: cache_and_mq
+    usage: Stream consumption (XREADGROUP), pub/sub, ticker cache reads
+    resilience:
+      timeout: 5s
+      retry: 3
+
+  - service: postgresql
+    type: database
+    usage: Persistence for telegram_messages, news, economic_events, ai_analyses
+    resilience:
+      timeout: 10s
+
+  - service: Anthropic
+    type: external
+    protocol: http
+    base_url: https://api.anthropic.com
+    apis:
+      - Anthropic.messages_create
+    usage: Claude LLM API for news/macro/QA analysis
+    resilience:
+      timeout: 30s
+      retry: 2
+      circuit_breaker: threshold=10, window=60s

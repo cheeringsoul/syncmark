@@ -1,0 +1,25 @@
+name: telegram_listen
+description: Telegram MTProto message listener — connects to channels, receives messages, publishes to Redis Stream
+service: collector
+
+entry_point:
+  fn: Start
+  type: long_running
+
+steps:
+  - fn: Start
+    intent: Initialize MTProto client, authenticate, subscribe to configured channels
+    reads:
+      - config(telegram.app_id, telegram.app_hash, telegram.phone, telegram.channels)
+    calls:
+      - handleMessage
+
+  - fn: handleMessage
+    intent: Process incoming Telegram message, extract fields, publish to Redis Stream
+    reads:
+      - telegram.message(channelID, messageID, text, media, date)
+    emits:
+      - telegram_raw_message(channel_id, channel_name, message_id, text, media_type, media_url, telegram_date) to redis:telegram:raw_messages
+    on_fail:
+      - marshal_error → log + skip
+      - stream_write_error → retry 3 → log

@@ -1,0 +1,31 @@
+# REGISTRY_SYNC_NEEDED
+name: chain_smart_money
+description: Smart money address buy/sell activity detected on-chain
+channel: redis:chain:smart_money
+producers:
+  - fn: handleSmartMoney
+    service: collector
+    flow: chain_monitor
+consumers:
+  - fn: WhaleConsumer.run
+    service: analyzer
+    flow: whale_pipeline
+schema:
+  - field: chain
+    type: string
+  - field: address
+    type: string
+  - field: label
+    type: string
+  - field: action
+    type: string
+  - field: token
+    type: string
+  - field: amount
+    type: decimal
+  - field: value_usd
+    type: decimal
+  - field: tx_hash
+    type: string
+  - field: timestamp
+    type: timestamp

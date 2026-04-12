@@ -1,0 +1,33 @@
+# REGISTRY_SYNC_NEEDED
+name: large_order_alert
+description: Enriched large order event ready for client push
+channel: redis:alerts:large_orders
+producers:
+  - fn: RedisPublisher.publish_large_order_alert
+    service: analyzer
+    flow: large_order_pipeline
+consumers:
+  - fn: LargeOrdersWsHandler.broadcast
+    service: api-server
+    description: Push to ws/large-orders
+schema:
+  - field: exchange
+    type: string
+  - field: symbol
+    type: string
+  - field: side
+    type: string
+  - field: price
+    type: decimal
+  - field: quantity
+    type: decimal
+  - field: value_usd
+    type: decimal
+  - field: severity
+    type: string
+  - field: spot_price
+    type: decimal
+  - field: deviation_pct
+    type: decimal
+  - field: timestamp
+    type: timestamp

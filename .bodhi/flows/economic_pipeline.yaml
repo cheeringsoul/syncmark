@@ -1,0 +1,52 @@
+name: economic_pipeline
+description: Consume macro economic events, upsert calendar, run AI impact analysis when actual value lands
+service: analyzer
+entry: MacroConsumer.run
+
+steps:
+  - fn: MacroConsumer.run
+    intent: Long-running XREADGROUP loop on macro events stream
+    consumes:
+      - macro_economic_event from redis:macro:economic_events
+    calls:
+      - EconomicPipeline.handle
+
+  - fn: EconomicPipeline.handle
+    intent: Upsert event, if PUBLISHED then run AI impact analysis and emit downstream
+    consumes:
+      - macro_economic_event from redis:macro:economic_events
+    calls:
+      - EconomicRepo.upsert
+      - EconomicPipeline.maybe_analyze
+    on_fail:
+      - db_failure → nack → redeliver
+
+  - fn: EconomicRepo.upsert
+    intent: Idempotent upsert by event_id, transition status
+    writes:
+      - economic_events(event_id, name, country, importance, scheduled_at, previous, forecast, actual, status, updated_at) via INSERT ON CONFLICT (event_id) DO UPDATE
+
+  - fn: EconomicPipeline.maybe_analyze
+    intent: Only run AI when status=PUBLISHED and actual value is present
+    calls:
+      - LLMClient.analyze_macro
+      - EconomicRepo.attach_analysis
+      - AiAnalysisRepo.record
+      - RedisPublisher.publish_economic_analyzed
+    on_fail:
+      - llm_timeout → circuit_breaker(threshold=10, window=60s) → degrade(skip_ai)
+
+  - fn: LLMClient.analyze_macro
+    intent: Call Claude with macro prompt, return impact analysis under 200 chars
+    calls:
+      - LLMClient._call
+
+  - fn: EconomicRepo.attach_analysis
+    intent: Write ai_analysis field and bump updated_at
+    writes:
+      - economic_events(ai_analysis, updated_at) via UPDATE
+
+  - fn: RedisPublisher.publish_economic_analyzed
+    intent: Publish economic_event_analyzed event
+    emits:
+      - economic_event_analyzed(event_id, name, country, actual, forecast, previous, ai_analysis, importance, published_at) to redis:economic:analyzed

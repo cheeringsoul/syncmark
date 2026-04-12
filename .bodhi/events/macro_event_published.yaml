@@ -1,0 +1,17 @@
+# REGISTRY_SYNC_NEEDED
+name: macro_event_published
+description: Economic event published with actual value available
+channel: redis:macro:economic_events
+producers:
+  - fn: pollPublish
+    service: collector
+    flow: macro_collect
+consumers:
+  - fn: MacroConsumer.run
+    service: analyzer
+    flow: economic_pipeline
+schema:
+  - field: event_id
+    type: string
+  - field: actual
+    type: string

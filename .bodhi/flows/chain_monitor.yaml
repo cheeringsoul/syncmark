@@ -1,0 +1,36 @@
+name: chain_monitor
+description: On-chain data monitoring — whale transfers, smart money tracking on ETH and SOL
+service: collector
+
+entry_point:
+  fn: Start
+  type: long_running
+
+steps:
+  - fn: Start
+    intent: Initialize ETH and SOL chain watchers, load address labels, start monitoring
+    reads:
+      - config(chain.ethereum.rpc_ws, chain.solana.rpc_ws, chain.labels_file)
+    calls:
+      - Start
+
+  - fn: handleTransfer
+    intent: Process large transfer, match address labels, publish whale event
+    reads:
+      - eth.log(from, to, value, token, tx_hash, block_timestamp)
+      - labels(address → label)
+    emits:
+      - chain_whale_transfer(chain, tx_hash, from_address, from_label, to_address, to_label, token, amount, value_usd, timestamp) to redis:chain:whale_transfers
+    on_fail:
+      - rpc_error → retry 3 → log
+      - label_lookup_miss → use "Unknown"
+
+  - fn: handleSmartMoney
+    intent: Detect smart money buy/sell from tracked addresses
+    reads:
+      - eth.log(from, to, value, token, tx_hash, block_timestamp)
+      - labels(address → label, is_smart_money)
+    emits:
+      - chain_smart_money(chain, address, label, action, token, amount, value_usd, tx_hash, timestamp) to redis:chain:smart_money
+    on_fail:
+      - price_lookup_error → log + skip

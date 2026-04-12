@@ -1,0 +1,27 @@
+# REGISTRY_SYNC_NEEDED
+name: telegram_raw_message
+description: Raw Telegram message captured from monitored channel
+channel: redis:telegram:raw_messages
+producers:
+  - fn: handleMessage
+    service: collector
+    flow: telegram_listen
+consumers:
+  - fn: TelegramConsumer.run
+    service: analyzer
+    flow: news_pipeline
+schema:
+  - field: channel_id
+    type: int64
+  - field: channel_name
+    type: string
+  - field: message_id
+    type: int64
+  - field: text
+    type: string
+  - field: media_type
+    type: string
+  - field: media_url
+    type: string
+  - field: telegram_date
+    type: timestamp

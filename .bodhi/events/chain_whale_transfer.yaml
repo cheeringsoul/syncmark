@@ -1,0 +1,33 @@
+# REGISTRY_SYNC_NEEDED
+name: chain_whale_transfer
+description: Large on-chain transfer by labeled whale address
+channel: redis:chain:whale_transfers
+producers:
+  - fn: handleTransfer
+    service: collector
+    flow: chain_monitor
+consumers:
+  - fn: WhaleConsumer.run
+    service: analyzer
+    flow: whale_pipeline
+schema:
+  - field: chain
+    type: string
+  - field: tx_hash
+    type: string
+  - field: from_address
+    type: string
+  - field: from_label
+    type: string
+  - field: to_address
+    type: string
+  - field: to_label
+    type: string
+  - field: token
+    type: string
+  - field: amount
+    type: decimal
+  - field: value_usd
+    type: decimal
+  - field: timestamp
+    type: timestamp

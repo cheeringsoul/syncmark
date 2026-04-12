@@ -1,0 +1,49 @@
+name: collector
+description: Data collection service — Telegram, CEX, on-chain, macro indicators
+tech_stack: [go, gin, gorilla-websocket, gotd-td, go-ethereum, redis-streams]
+
+apis: []
+
+produces:
+  - event: telegram_raw_message
+    channel: redis:telegram:raw_messages
+  - event: cex_kline
+    channel: redis:cex:klines
+  - event: cex_large_order
+    channel: redis:cex:large_orders
+  - event: chain_whale_transfer
+    channel: redis:chain:whale_transfers
+  - event: chain_smart_money
+    channel: redis:chain:smart_money
+  - event: macro_economic_event
+    channel: redis:macro:economic_events
+
+depends_on:
+  - service: redis
+    type: cache_and_mq
+    usage: Stream publishing + ticker/dashboard cache
+
+  - service: telegram
+    type: external
+    protocol: mtproto
+    usage: Channel message subscription
+
+  - service: binance
+    type: external
+    protocol: websocket
+    usage: Market data streams
+
+  - service: okx
+    type: external
+    protocol: websocket
+    usage: Market data streams
+
+  - service: ethereum-node
+    type: external
+    protocol: websocket
+    usage: Log subscription for whale/smart money tracking
+
+  - service: solana-node
+    type: external
+    protocol: websocket
+    usage: Transaction subscription

@@ -1,0 +1,27 @@
+# REGISTRY_SYNC_NEEDED
+name: news_analyzed
+description: News record completed AI analysis, ready for client publication
+channel: redis:news:analyzed
+producers:
+  - fn: RedisPublisher.publish_news_analyzed
+    service: analyzer
+    flow: news_pipeline
+consumers:
+  - fn: NewsWsHandler.broadcast
+    service: api-server
+    description: Push to ws/news, transition news.status to PUBLISHED
+schema:
+  - field: news_id
+    type: int64
+  - field: title
+    type: string
+  - field: ai_summary
+    type: string
+  - field: sentiment
+    type: string
+  - field: related_symbols
+    type: string[]
+  - field: importance
+    type: string
+  - field: analyzed_at
+    type: timestamp

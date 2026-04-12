@@ -1,0 +1,46 @@
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+
+telegram:
+  app_id: 0
+  app_hash: ""
+  phone: ""
+  session_dir: "./data/telegram_sessions"
+  channels:
+    - id: -1001234567890
+      name: "CryptoNews"
+    - id: -1009876543210
+      name: "WhaleAlert"
+
+cex:
+  large_order_threshold_usd: 1000000
+  symbols:
+    - "BTCUSDT"
+    - "ETHUSDT"
+    - "SOLUSDT"
+  kline_intervals:
+    - "1m"
+    - "5m"
+    - "15m"
+    - "1h"
+    - "4h"
+    - "1d"
+
+chain:
+  ethereum:
+    rpc_ws: "wss://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
+    whale_threshold_usd: 5000000
+  solana:
+    rpc_ws: "wss://api.mainnet-beta.solana.com"
+    whale_threshold_usd: 1000000
+  labels_file: "./configs/address_labels.json"
+
+macro:
+  calendar_cron: "0 6 * * *"
+  publish_poll_interval: "10s"
+  publish_poll_window: "5m"
+  dashboard_refresh_interval: "60s"
+  sources:
+    fear_greed_url: "https://api.alternative.me/fng/"

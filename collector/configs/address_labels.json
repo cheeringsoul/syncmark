@@ -1,0 +1,22 @@
+{
+  "0x28c6c06298d514db089934071355e5743bf21d60": {
+    "label": "Binance Hot Wallet 14",
+    "is_smart_money": false,
+    "is_exchange": true
+  },
+  "0x21a31ee1afc51d94c2efccaa2092ad1028285549": {
+    "label": "Binance Hot Wallet 15",
+    "is_smart_money": false,
+    "is_exchange": true
+  },
+  "0x56eddb7aa87536c09ccc2793473599fd21a8b17f": {
+    "label": "Alameda Research",
+    "is_smart_money": true,
+    "is_exchange": false
+  },
+  "0x9696f59e4d72e237be84ffd425dcad154bf96976": {
+    "label": "Jump Trading",
+    "is_smart_money": true,
+    "is_exchange": false
+  }
+}
