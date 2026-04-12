@@ -1,0 +1,66 @@
+table: rotation_signals
+description: Rotation monitoring signals — tracks relative strength reversals for sell/buy timing
+database: postgresql
+datasource: primary
+
+fields:
+  - name: id
+    type: bigserial
+    description: Primary key
+    primary_key: true
+  - name: symbol
+    type: varchar(20)
+    description: "Trading pair (e.g. SOLUSDT)"
+  - name: signal_type
+    type: varchar(20)
+    description: "sell_signal | weakening | leading | rising"
+  - name: benchmark
+    type: varchar(20)
+    description: "Benchmark symbol (e.g. BTCUSDT)"
+  - name: rs_current
+    type: numeric(10,4)
+    description: Current relative strength value
+  - name: rs_peak
+    type: numeric(10,4)
+    description: Peak RS in lookback window
+  - name: rs_delta
+    type: numeric(10,4)
+    description: RS change rate (current minus previous period)
+  - name: coin_return_long
+    type: numeric(10,4)
+    description: "Coin return over long window (e.g. 30d), percentage"
+  - name: coin_return_short
+    type: numeric(10,4)
+    description: "Coin return over short window (e.g. 7d), percentage"
+  - name: benchmark_return_short
+    type: numeric(10,4)
+    description: "Benchmark return over short window (e.g. 7d), percentage"
+  - name: volatility
+    type: numeric(10,4)
+    description: Short window volatility (std/mean)
+  - name: status
+    type: smallint
+    description: Signal lifecycle status
+    state_machine: rotation_signal_lifecycle
+    enum:
+      0: DETECTED
+      1: ACTIVE
+      2: EXPIRED
+      3: VERIFIED
+  - name: ai_summary
+    type: text
+    description: Optional AI-generated analysis summary
+  - name: detected_at
+    type: timestamptz
+    description: When signal was first detected
+  - name: expired_at
+    type: timestamptz
+    description: When signal was marked expired or verified
+
+indexes:
+  - name: idx_rotation_symbol_status
+    fields: [symbol, status]
+    description: Active signals lookup per symbol
+  - name: idx_rotation_detected
+    fields: [detected_at]
+    description: Chronological signal listing

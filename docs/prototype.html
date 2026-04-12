@@ -690,6 +690,204 @@ body {
   justify-content: center;
 }
 
+/* Rotation Monitor */
+.rotation-alert-card {
+  background: linear-gradient(135deg, rgba(255,69,58,0.12) 0%, rgba(255,159,10,0.08) 100%);
+  border: 0.5px solid rgba(255,69,58,0.25);
+}
+
+.rotation-coin-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.rotation-coin-row:last-child { border-bottom: none; }
+
+.rotation-coin-info {
+  width: 52px;
+}
+
+.rotation-coin-info .symbol { font-size: 15px; font-weight: 600; }
+.rotation-coin-info .rank { font-size: 10px; color: var(--text3); }
+
+.rs-bar-wrap {
+  flex: 1;
+  margin: 0 10px;
+}
+
+.rs-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 3px;
+}
+
+.rs-bar-track {
+  height: 6px;
+  background: var(--card2);
+  border-radius: 3px;
+  position: relative;
+  overflow: visible;
+}
+
+.rs-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.rs-bar-marker {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: var(--text2);
+  border-radius: 1px;
+  transform: translateX(-50%);
+}
+
+.rs-bar-marker.prev {
+  background: var(--text3);
+  opacity: 0.5;
+}
+
+.rotation-status {
+  width: 72px;
+  text-align: right;
+}
+
+.rotation-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.rotation-tag.leading { background: rgba(48,209,88,0.2); color: var(--green); }
+.rotation-tag.weakening { background: rgba(255,159,10,0.2); color: var(--orange); }
+.rotation-tag.sell-signal { background: rgba(255,69,58,0.25); color: var(--red); }
+.rotation-tag.lagging { background: rgba(142,142,147,0.2); color: var(--text2); }
+.rotation-tag.rising { background: rgba(10,132,255,0.2); color: var(--blue); }
+
+.rotation-detail-card {
+  background: var(--card);
+  border-radius: 12px;
+  margin: 8px 16px;
+  padding: 14px;
+}
+
+.rotation-signal-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(255,69,58,0.15) 0%, rgba(255,159,10,0.1) 100%);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.rotation-signal-banner .signal-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.rotation-signal-banner .signal-body { flex: 1; }
+.rotation-signal-banner .signal-title { font-size: 14px; font-weight: 600; color: var(--red); }
+.rotation-signal-banner .signal-desc { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
+
+.rs-timeline {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 40px;
+  margin: 8px 0 4px;
+}
+
+.rs-timeline-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  transition: height 0.3s;
+}
+
+.rotation-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.rotation-metric {
+  text-align: center;
+  padding: 8px 4px;
+  background: var(--card2);
+  border-radius: 8px;
+}
+
+.rotation-metric .rm-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+.rotation-metric .rm-value { font-size: 16px; font-weight: 700; }
+.rotation-metric .rm-sub { font-size: 10px; margin-top: 2px; }
+
+.benchmark-strip {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.benchmark-chip {
+  flex: 1;
+  background: var(--card2);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+
+.benchmark-chip .bm-label { font-size: 10px; color: var(--text3); }
+.benchmark-chip .bm-value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+.rotation-phase {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 12px 0 8px;
+  position: relative;
+}
+
+.phase-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+.phase-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--card2);
+  margin: 0 auto 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.phase-dot.active { background: var(--orange); box-shadow: 0 0 6px rgba(255,159,10,0.5); }
+.phase-dot.passed { background: var(--text3); }
+.phase-step .phase-label { font-size: 9px; color: var(--text3); }
+.phase-step.current .phase-label { color: var(--orange); font-weight: 600; }
+
+.phase-line {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+  z-index: 0;
+}
+
 /* Sparkline SVG */
 .sparkline { display: block; }
 
@@ -808,6 +1006,38 @@ body {
         </div>
       </div>
 
+      <!-- Rotation Alert -->
+      <div class="card rotation-alert-card">
+        <div class="card-header">
+          <div class="card-title">⚡ 轮动信号</div>
+          <div class="card-more" onclick="switchTab('market',document.querySelectorAll('.tab-item')[1]);setTimeout(()=>{document.querySelectorAll('#market-segments .segment')[4].click()},100)">详情 ›</div>
+        </div>
+        <div class="rotation-signal-banner">
+          <div class="signal-icon">🔄</div>
+          <div class="signal-body">
+            <div class="signal-title">SOL 动能衰减 — 建议关注</div>
+            <div class="signal-desc">SOL 过去30天领涨 +42%，近7天横盘 +0.8%，而大盘普涨 +6.2%。相对强度快速下降。</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <div style="flex:1;display:flex;align-items:center;gap:6px;padding:8px;background:var(--card);border-radius:8px">
+            <span style="font-weight:600;font-size:13px">SOL</span>
+            <span class="rotation-tag sell-signal">卖出信号</span>
+            <span style="margin-left:auto;font-size:12px;color:var(--text2)">RS 0.82 ↓</span>
+          </div>
+          <div style="flex:1;display:flex;align-items:center;gap:6px;padding:8px;background:var(--card);border-radius:8px">
+            <span style="font-weight:600;font-size:13px">AVAX</span>
+            <span class="rotation-tag weakening">动能减弱</span>
+            <span style="margin-left:auto;font-size:12px;color:var(--text2)">RS 1.12 ↓</span>
+          </div>
+        </div>
+        <div onclick="window.open('rotation-overview.html','_blank')" style="margin-top:8px;padding:9px;background:var(--card);border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">
+          <span style="font-size:14px">📊</span>
+          <span style="font-size:13px;font-weight:500;color:var(--blue)">查看轮动全景图</span>
+          <span style="font-size:12px;color:var(--text3)">20 币相对走势 ›</span>
+        </div>
+      </div>
+
       <!-- Latest News -->
       <div class="card">
         <div class="card-header">
@@ -897,7 +1127,11 @@ body {
         <div class="segment" onclick="switchSeg(this)">全部</div>
         <div class="segment" onclick="switchSeg(this)">涨幅榜</div>
         <div class="segment" onclick="switchSeg(this)">跌幅榜</div>
+        <div class="segment" onclick="switchSeg(this)">轮动</div>
       </div>
+
+      <!-- Market: 自选 view (default) -->
+      <div id="market-watchlist">
       <div class="search-bar">
         <span class="search-icon">🔍</span>
         <input placeholder="搜索币种">
@@ -951,6 +1185,301 @@ body {
           <div class="spread-diff" style="color:var(--orange)">△$0.18 <span style="font-size:11px;color:var(--text3)">0.101%</span></div>
         </div>
       </div>
+      </div><!-- end market-watchlist -->
+
+      <!-- Market: 轮动 view -->
+      <div id="market-rotation" style="display:none">
+
+        <!-- 全景图入口 -->
+        <div onclick="window.open('rotation-overview.html','_blank')" style="margin:4px 16px 8px;padding:10px 14px;background:linear-gradient(135deg,rgba(10,132,255,0.12) 0%,rgba(191,90,242,0.08) 100%);border-radius:10px;display:flex;align-items:center;gap:10px;cursor:pointer;border:0.5px solid rgba(10,132,255,0.2)">
+          <span style="font-size:22px">📊</span>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;color:var(--blue)">轮动全景图</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:1px">20 个自选币相对 BTC 走势叠加对比</div>
+          </div>
+          <span style="font-size:16px;color:var(--text3)">›</span>
+        </div>
+
+        <!-- Benchmark summary -->
+        <div style="padding:0 16px;margin-bottom:4px">
+          <div class="benchmark-strip">
+            <div class="benchmark-chip">
+              <div class="bm-label">基准 (BTC)</div>
+              <div class="bm-value" style="color:var(--green)">7D +6.2%</div>
+            </div>
+            <div class="benchmark-chip">
+              <div class="bm-label">30D 基准</div>
+              <div class="bm-value" style="color:var(--green)">+18.5%</div>
+            </div>
+            <div class="benchmark-chip">
+              <div class="bm-label">市场状态</div>
+              <div class="bm-value" style="color:var(--green)">普涨</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Signal -->
+        <div style="padding:0 16px">
+          <div class="rotation-signal-banner">
+            <div class="signal-icon">🚨</div>
+            <div class="signal-body">
+              <div class="signal-title">SOL 轮动卖出信号</div>
+              <div class="signal-desc">RS 从 2.1 降至 0.82，大盘普涨但 SOL 横盘，历史领涨动能已耗尽</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SOL Detail -->
+        <div class="rotation-detail-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:17px;font-weight:700">SOL</span>
+              <span class="rotation-tag sell-signal">卖出信号</span>
+            </div>
+            <span style="font-size:14px;color:var(--text2)">$178.50</span>
+          </div>
+
+          <!-- Phase indicator -->
+          <div style="position:relative;margin:14px 0">
+            <div class="phase-line"></div>
+            <div class="rotation-phase">
+              <div class="phase-step">
+                <div class="phase-dot passed"></div>
+                <div class="phase-label">蓄力</div>
+              </div>
+              <div class="phase-step">
+                <div class="phase-dot passed"></div>
+                <div class="phase-label">领涨</div>
+              </div>
+              <div class="phase-step current">
+                <div class="phase-dot active"></div>
+                <div class="phase-label">横盘</div>
+              </div>
+              <div class="phase-step">
+                <div class="phase-dot"></div>
+                <div class="phase-label">落后</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RS Timeline -->
+          <div style="font-size:11px;color:var(--text3);margin-bottom:2px">RS 走势 (30天)</div>
+          <div class="rs-timeline" id="sol-rs-timeline"></div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
+            <span>30天前</span>
+            <span style="color:var(--text2)">— RS=1.0 基准线</span>
+            <span>今天</span>
+          </div>
+
+          <!-- Metrics -->
+          <div class="rotation-metrics">
+            <div class="rotation-metric">
+              <div class="rm-label">当前 RS</div>
+              <div class="rm-value" style="color:var(--red)">0.82</div>
+              <div class="rm-sub" style="color:var(--red)">↓ 落后大盘</div>
+            </div>
+            <div class="rotation-metric">
+              <div class="rm-label">30D RS 峰值</div>
+              <div class="rm-value" style="color:var(--green)">2.10</div>
+              <div class="rm-sub" style="color:var(--text3)">3月18日</div>
+            </div>
+            <div class="rotation-metric">
+              <div class="rm-label">RS 变化率</div>
+              <div class="rm-value" style="color:var(--red)">-0.41</div>
+              <div class="rm-sub" style="color:var(--red)">快速衰减</div>
+            </div>
+          </div>
+
+          <div class="rotation-metrics" style="margin-top:6px">
+            <div class="rotation-metric">
+              <div class="rm-label">30D 涨幅</div>
+              <div class="rm-value" style="color:var(--green)">+42%</div>
+              <div class="rm-sub" style="color:var(--text3)">领涨阶段</div>
+            </div>
+            <div class="rotation-metric">
+              <div class="rm-label">7D 涨幅</div>
+              <div class="rm-value" style="color:var(--text2)">+0.8%</div>
+              <div class="rm-sub" style="color:var(--orange)">横盘中</div>
+            </div>
+            <div class="rotation-metric">
+              <div class="rm-label">7D 波动率</div>
+              <div class="rm-value">2.1%</div>
+              <div class="rm-sub" style="color:var(--orange)">收窄</div>
+            </div>
+          </div>
+
+          <!-- AI Analysis -->
+          <div class="cal-ai" style="margin-top:10px">
+            <span class="ai-icon">🤖 AI:</span> SOL 在 3/12-3/28 期间独涨 42%，显著领先基准（BTC 同期 +18.5%）。4/5 起 BTC 带动大盘普涨 +6.2%，但 SOL 涨幅仅 0.8%，波动率从 5.8% 收窄至 2.1%。经典的"领涨→横盘→轮动出清"模式，建议逐步减仓。
+          </div>
+        </div>
+
+        <!-- All coins RS table -->
+        <div class="rotation-detail-card">
+          <div class="card-header" style="margin-bottom:8px">
+            <div class="card-title">全币种相对强度</div>
+            <div style="font-size:11px;color:var(--text3)">基准: BTC 7D</div>
+          </div>
+
+          <div class="rotation-coin-row">
+            <div class="rotation-coin-info">
+              <div class="symbol">DOGE</div>
+            </div>
+            <div class="rs-bar-wrap">
+              <div class="rs-bar-label">
+                <span>RS 1.58</span>
+                <span style="color:var(--green)">↑ +0.32</span>
+              </div>
+              <div class="rs-bar-track">
+                <div class="rs-bar-fill" style="width:79%;background:var(--green)"></div>
+                <div class="rs-bar-marker" style="left:50%"></div>
+              </div>
+            </div>
+            <div class="rotation-status">
+              <div class="rotation-tag leading">领涨中</div>
+            </div>
+          </div>
+
+          <div class="rotation-coin-row">
+            <div class="rotation-coin-info">
+              <div class="symbol">LINK</div>
+            </div>
+            <div class="rs-bar-wrap">
+              <div class="rs-bar-label">
+                <span>RS 1.35</span>
+                <span style="color:var(--green)">↑ +0.28</span>
+              </div>
+              <div class="rs-bar-track">
+                <div class="rs-bar-fill" style="width:67%;background:var(--green)"></div>
+                <div class="rs-bar-marker" style="left:50%"></div>
+              </div>
+            </div>
+            <div class="rotation-status">
+              <div class="rotation-tag rising">走强</div>
+            </div>
+          </div>
+
+          <div class="rotation-coin-row">
+            <div class="rotation-coin-info">
+              <div class="symbol">AVAX</div>
+            </div>
+            <div class="rs-bar-wrap">
+              <div class="rs-bar-label">
+                <span>RS 1.12</span>
+                <span style="color:var(--orange)">↓ -0.18</span>
+              </div>
+              <div class="rs-bar-track">
+                <div class="rs-bar-fill" style="width:56%;background:var(--orange)"></div>
+                <div class="rs-bar-marker prev" style="left:65%"></div>
+                <div class="rs-bar-marker" style="left:56%"></div>
+              </div>
+            </div>
+            <div class="rotation-status">
+              <div class="rotation-tag weakening">动能减弱</div>
+            </div>
+          </div>
+
+          <div class="rotation-coin-row">
+            <div class="rotation-coin-info">
+              <div class="symbol">ETH</div>
+            </div>
+            <div class="rs-bar-wrap">
+              <div class="rs-bar-label">
+                <span>RS 0.95</span>
+                <span style="color:var(--text3)">→ -0.02</span>
+              </div>
+              <div class="rs-bar-track">
+                <div class="rs-bar-fill" style="width:47%;background:var(--text2)"></div>
+                <div class="rs-bar-marker" style="left:50%"></div>
+              </div>
+            </div>
+            <div class="rotation-status">
+              <div class="rotation-tag lagging">跟随</div>
+            </div>
+          </div>
+
+          <div class="rotation-coin-row" style="background:rgba(255,69,58,0.05);margin:0 -14px;padding:10px 14px;border-radius:8px">
+            <div class="rotation-coin-info">
+              <div class="symbol" style="color:var(--red)">SOL</div>
+            </div>
+            <div class="rs-bar-wrap">
+              <div class="rs-bar-label">
+                <span style="color:var(--red)">RS 0.82</span>
+                <span style="color:var(--red)">↓ -0.41</span>
+              </div>
+              <div class="rs-bar-track">
+                <div class="rs-bar-fill" style="width:41%;background:var(--red)"></div>
+                <div class="rs-bar-marker prev" style="left:62%"></div>
+                <div class="rs-bar-marker" style="left:41%"></div>
+              </div>
+            </div>
+            <div class="rotation-status">
+              <div class="rotation-tag sell-signal">卖出信号</div>
+            </div>
+          </div>
+
+          <div class="rotation-coin-row">
+            <div class="rotation-coin-info">
+              <div class="symbol">XRP</div>
+            </div>
+            <div class="rs-bar-wrap">
+              <div class="rs-bar-label">
+                <span>RS 0.72</span>
+                <span style="color:var(--red)">↓ -0.08</span>
+              </div>
+              <div class="rs-bar-track">
+                <div class="rs-bar-fill" style="width:36%;background:var(--red)"></div>
+                <div class="rs-bar-marker" style="left:50%"></div>
+              </div>
+            </div>
+            <div class="rotation-status">
+              <div class="rotation-tag lagging">落后</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historical signals -->
+        <div class="rotation-detail-card">
+          <div class="card-header" style="margin-bottom:8px">
+            <div class="card-title">历史信号</div>
+            <div style="font-size:11px;color:var(--text3)">近 30 天</div>
+          </div>
+          <div class="alert-item">
+            <div class="alert-icon" style="background:rgba(255,69,58,0.15)">🔄</div>
+            <div class="alert-body">
+              <div class="alert-title" style="color:var(--red)">SOL 卖出信号</div>
+              <div class="alert-sub">RS 2.1→0.82 · 30D +42% → 7D +0.8%</div>
+            </div>
+            <div class="alert-time">今天</div>
+          </div>
+          <div class="alert-item">
+            <div class="alert-icon" style="background:rgba(48,209,88,0.15)">🔄</div>
+            <div class="alert-body">
+              <div class="alert-title" style="color:var(--green)">DOGE 领涨信号</div>
+              <div class="alert-sub">RS 0.9→1.58 · 大盘横盘期独自上涨</div>
+            </div>
+            <div class="alert-time">2天前</div>
+          </div>
+          <div class="alert-item">
+            <div class="alert-icon" style="background:rgba(255,159,10,0.15)">🔄</div>
+            <div class="alert-body">
+              <div class="alert-title" style="color:var(--orange)">AVAX 动能预警</div>
+              <div class="alert-sub">RS 1.45→1.12 · 连续 5 天下降</div>
+            </div>
+            <div class="alert-time">3天前</div>
+          </div>
+          <div class="alert-item">
+            <div class="alert-icon" style="background:rgba(255,69,58,0.15)">🔄</div>
+            <div class="alert-body">
+              <div class="alert-title" style="color:var(--red)">LINK 卖出信号（已验证）</div>
+              <div class="alert-sub">信号后 7 天下跌 -12%</div>
+              <div class="alert-badges"><span class="badge high">已验证 ✓</span></div>
+            </div>
+            <div class="alert-time">12天前</div>
+          </div>
+        </div>
+      </div><!-- end market-rotation -->
+
     </div>
   </div>
 
@@ -1401,6 +1930,21 @@ function switchSeg(el) {
     document.getElementById('macro-calendar').style.display = idx === 0 ? 'block' : 'none';
     document.getElementById('macro-dashboard').style.display = idx === 1 ? 'block' : 'none';
   }
+
+  // Market tab: toggle watchlist vs rotation
+  if (bar.id === 'market-segments') {
+    const idx = Array.from(bar.children).indexOf(el);
+    const watchlist = document.getElementById('market-watchlist');
+    const rotation = document.getElementById('market-rotation');
+    if (idx === 4) {
+      watchlist.style.display = 'none';
+      rotation.style.display = 'block';
+      drawRsTimeline();
+    } else {
+      watchlist.style.display = 'block';
+      rotation.style.display = 'none';
+    }
+  }
 }
 
 function showDetail() {
@@ -1525,6 +2069,30 @@ setInterval(() => {
     setTimeout(() => { t.parentElement.parentElement.style.animation = ''; }, 500);
   });
 }, 3000);
+
+// RS Timeline chart
+function drawRsTimeline() {
+  const container = document.getElementById('sol-rs-timeline');
+  if (!container || container.children.length > 0) return;
+  // Simulate RS values: high in early period, declining recently
+  const rsData = [
+    1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.1,2.0,
+    1.95,1.9,1.85,1.8,1.7,1.6,1.5,1.4,1.3,1.2,
+    1.15,1.1,1.05,1.0,0.95,0.92,0.9,0.87,0.84,0.82
+  ];
+  const maxRS = Math.max(...rsData);
+  rsData.forEach((rs, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'rs-timeline-bar';
+    const pct = (rs / maxRS) * 100;
+    bar.style.height = pct + '%';
+    if (rs >= 1.5) bar.style.background = 'var(--green)';
+    else if (rs >= 1.0) bar.style.background = 'var(--orange)';
+    else bar.style.background = 'var(--red)';
+    if (i >= 20) bar.style.opacity = '0.6';
+    container.appendChild(bar);
+  });
+}
 </script>
 
 </body>

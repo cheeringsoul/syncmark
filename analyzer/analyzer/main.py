@@ -12,8 +12,10 @@ from fastapi import FastAPI
 
 from .api.routes import AskController, build_router
 from .config import AppConfig, load_config
+from .consumers.kline_consumer import KlineConsumer
 from .consumers.large_order_consumer import LargeOrderConsumer
 from .consumers.macro_consumer import MacroConsumer
+from .consumers.rotation_scheduler import RotationScheduler
 from .consumers.telegram_consumer import TelegramConsumer
 from .consumers.whale_consumer import WhaleConsumer
 from .context.aggregator import ContextAggregator
@@ -23,13 +25,16 @@ from .pipelines.ai_qa import AiQaPipeline
 from .pipelines.economic_pipeline import EconomicPipeline
 from .pipelines.large_order_pipeline import LargeOrderPipeline
 from .pipelines.news_pipeline import NewsPipeline
+from .pipelines.rotation_pipeline import RotationPipeline
 from .pipelines.whale_pipeline import WhalePipeline
 from .publisher.redis_publisher import RedisPublisher
 from .redis_client import build_redis
 from .repository.ai_analysis_repo import AiAnalysisRepo
 from .repository.economic_repo import EconomicRepo
+from .repository.kline_repo import KlineRepo
 from .repository.news_query import NewsQuery
 from .repository.news_repo import NewsRepo
+from .repository.rotation_repo import RotationRepo
 from .repository.telegram_repo import TelegramRepo
 
 logging.basicConfig(level=logging.INFO)
@@ -55,6 +60,8 @@ def build_app(cfg: AppConfig) -> tuple[FastAPI, list[asyncio.Task]]:
     economic_repo = EconomicRepo()
     ai_analysis_repo = AiAnalysisRepo()
     news_query = NewsQuery()
+    kline_repo = KlineRepo()
+    rotation_repo = RotationRepo()
 
     aggregator = ContextAggregator(
         session_factory=session_factory,
@@ -82,6 +89,13 @@ def build_app(cfg: AppConfig) -> tuple[FastAPI, list[asyncio.Task]]:
         redis_client=redis_client, publisher=publisher, thresholds=cfg.thresholds
     )
     whale_pipeline = WhalePipeline(publisher=publisher, thresholds=cfg.thresholds)
+    rotation_pipeline = RotationPipeline(
+        session_factory=session_factory,
+        publisher=publisher,
+        kline_repo=kline_repo,
+        rotation_repo=rotation_repo,
+        config=cfg.rotation,
+    )
     qa_pipeline = AiQaPipeline(
         session_factory=session_factory,
         llm=llm,
@@ -124,6 +138,19 @@ def build_app(cfg: AppConfig) -> tuple[FastAPI, list[asyncio.Task]]:
         dlq_stream=cfg.streams.dlq,
         pipeline=whale_pipeline,
     )
+    kline_consumer = KlineConsumer(
+        redis_client=redis_client,
+        stream=cfg.streams.cex_klines,
+        group="analyzer-kline",
+        consumer_id=cfg.redis.consumer_id,
+        dlq_stream=cfg.streams.dlq,
+        session_factory=session_factory,
+        kline_repo=kline_repo,
+    )
+    rotation_scheduler = RotationScheduler(
+        pipeline=rotation_pipeline,
+        config=cfg.rotation,
+    )
 
     app = FastAPI(title="syncmark-analyzer")
     app.include_router(build_router(ask_controller))
@@ -137,6 +164,9 @@ def build_app(cfg: AppConfig) -> tuple[FastAPI, list[asyncio.Task]]:
         consumer_tasks.append(asyncio.create_task(macro_consumer.run(), name="macro"))
         consumer_tasks.append(asyncio.create_task(large_order_consumer.run(), name="large_order"))
         consumer_tasks.append(asyncio.create_task(whale_consumer.run(), name="whale"))
+        consumer_tasks.append(asyncio.create_task(kline_consumer.run(), name="kline"))
+        if cfg.rotation.enabled:
+            consumer_tasks.append(asyncio.create_task(rotation_scheduler.run(), name="rotation"))
 
     @app.on_event("shutdown")
     async def _shutdown() -> None:

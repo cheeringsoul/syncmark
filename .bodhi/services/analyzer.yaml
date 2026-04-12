@@ -36,6 +36,10 @@ consumes:
     channel: redis:chain:smart_money
     flow: whale_pipeline
     consumer_group: analyzer-smart-money
+  - event: cex_kline
+    channel: redis:cex:klines
+    flow: kline_persist
+    consumer_group: analyzer-kline
 
 produces:
   - event: news_analyzed
@@ -46,6 +50,8 @@ produces:
     channel: redis:alerts:large_orders
   - event: whale_alert
     channel: redis:alerts:whales
+  - event: rotation_alert
+    channel: redis:alerts:rotation
 
 depends_on:
   - service: redis

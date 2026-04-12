@@ -56,3 +56,10 @@ class RedisPublisher:
         @bodhi.emits whale_alert(chain, kind, tx_hash, from_address, from_label, to_address, to_label, token, amount, value_usd, severity, direction, timestamp) to redis:alerts:whales
         """
         await self._redis.xadd(self._cfg.whale_alert, _flatten(payload))
+
+    async def publish_rotation_alert(self, payload: dict[str, Any]) -> None:
+        """
+        @bodhi.intent Publish rotation_alert event for api-server to push to iOS clients
+        @bodhi.emits rotation_alert(signal_id, symbol, signal_type, rs_current, rs_peak, rs_delta, coin_return_long, coin_return_short, benchmark_return_short, detected_at) to redis:alerts:rotation
+        """
+        await self._redis.xadd(self._cfg.rotation_alert, _flatten(payload))

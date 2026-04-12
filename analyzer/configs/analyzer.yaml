@@ -18,6 +18,7 @@ streams:
   telegram_raw: "telegram:raw_messages"
   macro_events: "macro:economic_events"
   cex_large_orders: "cex:large_orders"
+  cex_klines: "cex:klines"
   chain_whales: "chain:whale_transfers"
   chain_smart_money: "chain:smart_money"
   dlq: "analyzer:dlq"
@@ -27,6 +28,7 @@ publish:
   economic_analyzed: "economic:analyzed"
   large_order_alert: "alerts:large_orders"
   whale_alert: "alerts:whales"
+  rotation_alert: "alerts:rotation"
 
 server:
   host: "0.0.0.0"
@@ -39,3 +41,37 @@ thresholds:
   whale_extreme_usd: 20000000
   llm_circuit_breaker_threshold: 10
   llm_circuit_breaker_window_seconds: 60
+
+rotation:
+  enabled: true
+  interval_hours: 4
+  benchmark: "BTCUSDT"
+  symbols:
+    - "ETHUSDT"
+    - "SOLUSDT"
+    - "DOGEUSDT"
+    - "AVAXUSDT"
+    - "LINKUSDT"
+    - "XRPUSDT"
+    - "ADAUSDT"
+    - "DOTUSDT"
+    - "MATICUSDT"
+    - "OPUSDT"
+    - "NEARUSDT"
+    - "APTUSDT"
+    - "ARBUSDT"
+    - "ATOMUSDT"
+    - "UNIUSDT"
+    - "FILUSDT"
+    - "INJUSDT"
+    - "TIAUSDT"
+    - "SUIUSDT"
+    - "SEIUSDT"
+  long_window_days: 30
+  short_window_days: 7
+  thresholds:
+    rs_leading: 1.5
+    rs_sell_signal: 1.0
+    rs_delta_sell: -0.3
+    benchmark_min_return: 5.0
+    volatility_contraction: 0.5

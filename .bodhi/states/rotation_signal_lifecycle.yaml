@@ -1,0 +1,42 @@
+name: rotation_signal_lifecycle
+entity: rotation_signals
+field: status
+description: Rotation signal lifecycle from detection to verification or expiry
+
+states:
+  - name: DETECTED
+    value: 0
+    description: Signal just detected, awaiting confirmation in next cycle
+
+  - name: ACTIVE
+    value: 1
+    description: Signal confirmed active after multiple cycles
+
+  - name: EXPIRED
+    value: 2
+    description: Signal conditions no longer met, auto-expired
+
+  - name: VERIFIED
+    value: 3
+    description: Signal was correct — price moved as predicted after signal
+
+transitions:
+  - from: DETECTED
+    to: ACTIVE
+    trigger: Confirmed in next rotation cycle
+    fn: RotationPipeline._detect_signals
+
+  - from: DETECTED
+    to: EXPIRED
+    trigger: Conditions no longer met on re-check
+    fn: RotationPipeline._expire_stale_signals
+
+  - from: ACTIVE
+    to: EXPIRED
+    trigger: RS recovered or coin started moving again
+    fn: RotationPipeline._expire_stale_signals
+
+  - from: ACTIVE
+    to: VERIFIED
+    trigger: Post-signal price move confirmed the prediction
+    fn: RotationPipeline._verify_signals

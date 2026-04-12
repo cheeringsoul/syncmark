@@ -1,0 +1,50 @@
+name: rotation_monitor
+service: analyzer
+description: Periodic rotation analysis — compute relative strength for all monitored coins, detect rotation signals
+entry_point:
+  fn: RotationScheduler.run
+  type: scheduled
+  interval: 4h
+
+steps:
+  - fn: RotationScheduler.run
+    intent: Trigger rotation pipeline on periodic schedule
+    reads:
+      - config(rotation.interval_hours, rotation.enabled)
+    calls:
+      - RotationPipeline.handle
+
+  - fn: RotationPipeline.handle
+    intent: Orchestrate full rotation analysis cycle — compute RS, detect signals, expire stale, publish alerts
+    reads:
+      - klines(symbol, close, open_time) WHERE interval='1d' AND open_time > now()-long_window
+      - config(rotation.symbols, rotation.benchmark, rotation.thresholds)
+    calls:
+      - KlineRepo.get_daily_closes
+      - RotationPipeline._compute_rs
+      - RotationPipeline._detect_signals
+      - RotationPipeline._expire_stale_signals
+
+  - fn: KlineRepo.get_daily_closes
+    intent: Read daily close prices for specified symbols over a time window
+    reads:
+      - klines(symbol, close, open_time) WHERE interval='1d' AND symbol IN (:symbols) AND open_time >= :since
+
+  - fn: RotationPipeline._compute_rs
+    intent: Calculate relative strength of each coin vs benchmark over long and short windows
+
+  - fn: RotationPipeline._detect_signals
+    intent: Check RS reversal conditions against thresholds, persist new signals, publish alerts
+    writes:
+      - rotation_signals(symbol, signal_type, rs_current, rs_peak, rs_delta, coin_return_long, coin_return_short, benchmark_return_short, volatility, status=DETECTED, detected_at) via INSERT
+    emits:
+      - rotation_alert(signal_id, symbol, signal_type, rs_current, rs_peak, rs_delta, coin_return_long, coin_return_short, benchmark_return_short, detected_at) to redis:alerts:rotation
+    on_fail:
+      - db_error → log + skip
+
+  - fn: RotationPipeline._expire_stale_signals
+    intent: Mark ACTIVE/DETECTED signals as EXPIRED when conditions no longer met
+    reads:
+      - rotation_signals(id, symbol, status) WHERE status IN (DETECTED, ACTIVE)
+    writes:
+      - rotation_signals(status=EXPIRED, expired_at) via UPDATE WHERE conditions_no_longer_met

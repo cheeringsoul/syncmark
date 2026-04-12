@@ -1,0 +1,35 @@
+name: rotation_alert
+description: Emitted when a rotation signal is detected or updated
+channel: redis:alerts:rotation
+
+producers:
+  - fn: RotationPipeline._detect_signals
+    service: analyzer
+    flow: rotation_monitor
+
+schema:
+  - field: signal_id
+    type: integer
+    description: rotation_signals primary key
+  - field: symbol
+    type: string
+    description: Trading pair
+  - field: signal_type
+    type: string
+    description: "sell_signal | weakening | leading | rising"
+  - field: rs_current
+    type: decimal
+  - field: rs_peak
+    type: decimal
+  - field: rs_delta
+    type: decimal
+  - field: coin_return_long
+    type: decimal
+  - field: coin_return_short
+    type: decimal
+  - field: benchmark_return_short
+    type: decimal
+  - field: ai_summary
+    type: string
+  - field: detected_at
+    type: timestamp

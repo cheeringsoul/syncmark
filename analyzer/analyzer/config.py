@@ -35,6 +35,7 @@ class StreamsConfig:
     telegram_raw: str
     macro_events: str
     cex_large_orders: str
+    cex_klines: str
     chain_whales: str
     chain_smart_money: str
     dlq: str
@@ -46,6 +47,7 @@ class PublishConfig:
     economic_analyzed: str
     large_order_alert: str
     whale_alert: str
+    rotation_alert: str
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,26 @@ class Thresholds:
 
 
 @dataclass(frozen=True)
+class RotationThresholds:
+    rs_leading: float
+    rs_sell_signal: float
+    rs_delta_sell: float
+    benchmark_min_return: float
+    volatility_contraction: float
+
+
+@dataclass(frozen=True)
+class RotationConfig:
+    enabled: bool
+    interval_hours: int
+    benchmark: str
+    symbols: list[str]
+    long_window_days: int
+    short_window_days: int
+    thresholds: RotationThresholds
+
+
+@dataclass(frozen=True)
 class AppConfig:
     database: DatabaseConfig
     redis: RedisConfig
@@ -73,6 +95,7 @@ class AppConfig:
     publish: PublishConfig
     server: ServerConfig
     thresholds: Thresholds
+    rotation: RotationConfig
 
 
 def load_config(path: str | os.PathLike[str] | None = None) -> AppConfig:
@@ -82,6 +105,24 @@ def load_config(path: str | os.PathLike[str] | None = None) -> AppConfig:
     llm_raw = raw["llm"]
     api_key_env = llm_raw.get("api_key_env", "ANTHROPIC_API_KEY")
     api_key = os.environ.get(api_key_env, "")
+
+    rot_raw = raw.get("rotation", {})
+    rot_thresh_raw = rot_raw.get("thresholds", {})
+    rotation = RotationConfig(
+        enabled=rot_raw.get("enabled", False),
+        interval_hours=rot_raw.get("interval_hours", 4),
+        benchmark=rot_raw.get("benchmark", "BTCUSDT"),
+        symbols=rot_raw.get("symbols", []),
+        long_window_days=rot_raw.get("long_window_days", 30),
+        short_window_days=rot_raw.get("short_window_days", 7),
+        thresholds=RotationThresholds(
+            rs_leading=rot_thresh_raw.get("rs_leading", 1.5),
+            rs_sell_signal=rot_thresh_raw.get("rs_sell_signal", 1.0),
+            rs_delta_sell=rot_thresh_raw.get("rs_delta_sell", -0.3),
+            benchmark_min_return=rot_thresh_raw.get("benchmark_min_return", 5.0),
+            volatility_contraction=rot_thresh_raw.get("volatility_contraction", 0.5),
+        ),
+    )
 
     return AppConfig(
         database=DatabaseConfig(**raw["database"]),
@@ -97,4 +138,5 @@ def load_config(path: str | os.PathLike[str] | None = None) -> AppConfig:
         publish=PublishConfig(**raw["publish"]),
         server=ServerConfig(**raw["server"]),
         thresholds=Thresholds(**raw["thresholds"]),
+        rotation=rotation,
     )

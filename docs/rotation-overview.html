@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SyncMark — 轮动全景</title>
+<style>
+:root {
+  --bg: #000;
+  --card: #1c1c1e;
+  --card2: #2c2c2e;
+  --text: #fff;
+  --text2: #8e8e93;
+  --text3: #636366;
+  --green: #30d158;
+  --red: #ff453a;
+  --blue: #0a84ff;
+  --orange: #ff9f0a;
+  --yellow: #ffd60a;
+  --purple: #bf5af2;
+  --teal: #64d2ff;
+  --pink: #ff375f;
+  --border: #38383a;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.phone-frame {
+  width: 393px;
+  height: 852px;
+  background: var(--bg);
+  border-radius: 44px;
+  border: 3px solid #333;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.status-bar {
+  height: 54px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 32px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.status-bar .time { font-size: 15px; font-weight: 700; }
+.status-bar .icons { display: flex; gap: 6px; font-size: 13px; }
+
+.nav-bar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.nav-bar .title { font-size: 17px; font-weight: 600; }
+.nav-bar .back-btn {
+  cursor: pointer; font-size: 17px; color: var(--blue);
+  display: flex; align-items: center; gap: 4px;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.content::-webkit-scrollbar { display: none; }
+
+/* Period selector */
+.period-bar {
+  display: flex;
+  gap: 4px;
+  padding: 4px 16px 8px;
+}
+
+.period-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text2);
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+
+.period-btn.active {
+  background: var(--card2);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Chart area */
+.chart-container {
+  position: relative;
+  margin: 0 10px;
+  height: 340px;
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chart-container canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+/* Crosshair tooltip */
+.crosshair-tooltip {
+  display: none;
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  right: 16px;
+  background: rgba(28,28,30,0.95);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  border: 0.5px solid var(--border);
+}
+
+.crosshair-tooltip .ch-date {
+  color: var(--text2);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.crosshair-tooltip .ch-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+}
+
+.crosshair-tooltip .ch-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 48%;
+}
+
+.crosshair-tooltip .ch-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.crosshair-tooltip .ch-sym { font-weight: 600; width: 36px; }
+.crosshair-tooltip .ch-val { margin-left: auto; font-weight: 500; }
+
+/* Legend */
+.legend-section {
+  padding: 10px 16px 4px;
+}
+
+.legend-title {
+  font-size: 13px;
+  color: var(--text3);
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.legend-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: var(--card);
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.legend-item.dimmed {
+  opacity: 0.25;
+}
+
+.legend-item.highlighted {
+  border-color: var(--text2);
+}
+
+.legend-item .l-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-item .l-sym {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.legend-item .l-val {
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+.legend-item .l-tag {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.l-tag.sell { background: rgba(255,69,58,0.2); color: var(--red); }
+.l-tag.warn { background: rgba(255,159,10,0.2); color: var(--orange); }
+.l-tag.lead { background: rgba(48,209,88,0.2); color: var(--green); }
+
+/* Summary strip */
+.summary-strip {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px;
+}
+
+.summary-chip {
+  flex: 1;
+  background: var(--card);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.summary-chip .sc-label { font-size: 10px; color: var(--text3); }
+.summary-chip .sc-value { font-size: 15px; font-weight: 700; margin-top: 2px; }
+.summary-chip .sc-sub { font-size: 10px; margin-top: 1px; }
+
+/* Baseline info */
+.baseline-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 2px 16px 6px;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.baseline-info .bl-line {
+  width: 20px;
+  border-top: 1.5px dashed var(--text3);
+}
+
+/* View mode toggle */
+.view-toggle {
+  display: flex;
+  background: var(--card);
+  border-radius: 8px;
+  padding: 2px;
+  margin: 0 16px 8px;
+}
+
+.view-btn {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--text2);
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.view-btn.active {
+  background: var(--card2);
+  color: var(--text);
+}
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="status-bar">
+    <span class="time">14:32</span>
+    <div class="icons"><span>●●●●</span><span>WiFi</span><span>🔋</span></div>
+  </div>
+
+  <div class="nav-bar">
+    <div class="back-btn" onclick="window.close()">‹ 返回</div>
+    <div class="title">轮动全景</div>
+    <div style="font-size:13px;color:var(--blue);cursor:pointer" onclick="toggleSettings()">设置</div>
+  </div>
+
+  <div class="content">
+    <!-- Summary -->
+    <div class="summary-strip">
+      <div class="summary-chip">
+        <div class="sc-label">领涨币</div>
+        <div class="sc-value" style="color:var(--green)">3</div>
+        <div class="sc-sub" style="color:var(--green)">DOGE LINK OP</div>
+      </div>
+      <div class="summary-chip">
+        <div class="sc-label">卖出信号</div>
+        <div class="sc-value" style="color:var(--red)">1</div>
+        <div class="sc-sub" style="color:var(--red)">SOL</div>
+      </div>
+      <div class="summary-chip">
+        <div class="sc-label">动能预警</div>
+        <div class="sc-value" style="color:var(--orange)">2</div>
+        <div class="sc-sub" style="color:var(--orange)">AVAX NEAR</div>
+      </div>
+    </div>
+
+    <!-- View mode -->
+    <div class="view-toggle" id="viewToggle">
+      <button class="view-btn active" onclick="setView('relative', this)">相对 BTC</button>
+      <button class="view-btn" onclick="setView('normalized', this)">归一化涨跌幅</button>
+    </div>
+
+    <!-- Period selector -->
+    <div class="period-bar" id="periodBar">
+      <button class="period-btn" onclick="setPeriod(7, this)">7D</button>
+      <button class="period-btn" onclick="setPeriod(14, this)">14D</button>
+      <button class="period-btn active" onclick="setPeriod(30, this)">30D</button>
+      <button class="period-btn" onclick="setPeriod(60, this)">60D</button>
+      <button class="period-btn" onclick="setPeriod(90, this)">90D</button>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container" id="chartContainer">
+      <canvas id="mainChart"></canvas>
+      <div class="crosshair-tooltip" id="tooltip"></div>
+    </div>
+
+    <div class="baseline-info">
+      <div class="bl-line"></div>
+      <span>0% 线 = 与 BTC 涨跌幅一致</span>
+      <div class="bl-line"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend-section">
+      <div class="legend-title">
+        <span>自选币种 (点击聚焦 / 双击恢复)</span>
+        <span style="color:var(--blue);cursor:pointer" onclick="resetLegend()">全部显示</span>
+      </div>
+      <div class="legend-grid" id="legendGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Coin definitions ──
+const COINS = [
+  { sym: 'SOL',  name: 'Solana',     color: '#9945ff', tag: 'sell' },
+  { sym: 'ETH',  name: 'Ethereum',   color: '#627eea' },
+  { sym: 'DOGE', name: 'Dogecoin',   color: '#c3a634', tag: 'lead' },
+  { sym: 'AVAX', name: 'Avalanche',  color: '#e84142', tag: 'warn' },
+  { sym: 'LINK', name: 'Chainlink',  color: '#2a5ada', tag: 'lead' },
+  { sym: 'XRP',  name: 'Ripple',     color: '#00aae4' },
+  { sym: 'ADA',  name: 'Cardano',    color: '#0033ad' },
+  { sym: 'DOT',  name: 'Polkadot',   color: '#e6007a' },
+  { sym: 'MATIC',name: 'Polygon',    color: '#8247e5' },
+  { sym: 'OP',   name: 'Optimism',   color: '#ff0420', tag: 'lead' },
+  { sym: 'NEAR', name: 'Near',       color: '#00c08b', tag: 'warn' },
+  { sym: 'APT',  name: 'Aptos',      color: '#4cd7c0' },
+  { sym: 'ARB',  name: 'Arbitrum',   color: '#28a0f0' },
+  { sym: 'ATOM', name: 'Cosmos',     color: '#6f7390' },
+  { sym: 'UNI',  name: 'Uniswap',    color: '#ff007a' },
+  { sym: 'FIL',  name: 'Filecoin',   color: '#42c1ca' },
+  { sym: 'INJ',  name: 'Injective',  color: '#00f2e2' },
+  { sym: 'TIA',  name: 'Celestia',   color: '#7b2bf9' },
+  { sym: 'SUI',  name: 'Sui',        color: '#6fbcf0' },
+  { sym: 'SEI',  name: 'Sei',        color: '#9b1c2e' },
+];
+
+// ── Generate mock data ──
+// Each coin gets a "relative to BTC" percentage series
+// Positive = outperforming BTC, negative = underperforming
+function generateRelativeData(coin, days) {
+  const data = [0]; // all start at 0%
+  let val = 0;
+
+  // Different profiles per coin
+  const profiles = {
+    // SOL: strong early, flattens/drops late (the rotation signal case)
+    SOL:  { earlyDrift: 1.8, lateDrift: -0.3, vol: 1.2 },
+    // ETH: slightly below BTC
+    ETH:  { earlyDrift: -0.08, lateDrift: -0.05, vol: 0.6 },
+    // DOGE: weak early, strong late (rising star)
+    DOGE: { earlyDrift: -0.2, lateDrift: 1.5, vol: 1.5 },
+    // AVAX: was strong, starting to fade
+    AVAX: { earlyDrift: 1.0, lateDrift: -0.1, vol: 1.0 },
+    // LINK: gaining momentum
+    LINK: { earlyDrift: 0.2, lateDrift: 1.0, vol: 0.8 },
+    // XRP: underperforming
+    XRP:  { earlyDrift: -0.3, lateDrift: -0.4, vol: 0.7 },
+    // ADA: mostly flat, slight underperform
+    ADA:  { earlyDrift: -0.1, lateDrift: -0.15, vol: 0.5 },
+    // DOT: moderate underperform
+    DOT:  { earlyDrift: -0.15, lateDrift: -0.2, vol: 0.6 },
+    // MATIC: weak
+    MATIC:{ earlyDrift: -0.4, lateDrift: -0.3, vol: 0.7 },
+    // OP: strong and getting stronger
+    OP:   { earlyDrift: 0.5, lateDrift: 1.2, vol: 1.1 },
+    // NEAR: was ok, fading
+    NEAR: { earlyDrift: 0.6, lateDrift: -0.2, vol: 0.9 },
+    // APT: slight positive
+    APT:  { earlyDrift: 0.15, lateDrift: 0.1, vol: 0.7 },
+    // ARB: tracking BTC closely
+    ARB:  { earlyDrift: 0.05, lateDrift: -0.05, vol: 0.5 },
+    // ATOM: underperforming
+    ATOM: { earlyDrift: -0.2, lateDrift: -0.25, vol: 0.6 },
+    // UNI: moderate
+    UNI:  { earlyDrift: 0.1, lateDrift: 0.05, vol: 0.6 },
+    // FIL: weak
+    FIL:  { earlyDrift: -0.3, lateDrift: -0.15, vol: 0.8 },
+    // INJ: volatile, slight positive
+    INJ:  { earlyDrift: 0.3, lateDrift: 0.2, vol: 1.3 },
+    // TIA: strong performer
+    TIA:  { earlyDrift: 0.4, lateDrift: 0.3, vol: 1.0 },
+    // SUI: decent
+    SUI:  { earlyDrift: 0.2, lateDrift: 0.15, vol: 0.8 },
+    // SEI: flat
+    SEI:  { earlyDrift: -0.05, lateDrift: -0.1, vol: 0.6 },
+  };
+
+  const p = profiles[coin.sym] || { earlyDrift: 0, lateDrift: 0, vol: 0.5 };
+  const midpoint = Math.floor(days * 0.6);
+
+  for (let i = 1; i < days; i++) {
+    const drift = i < midpoint ? p.earlyDrift : p.lateDrift;
+    const noise = (Math.random() - 0.5) * p.vol * 2;
+    val += drift + noise;
+    data.push(val);
+  }
+  return data;
+}
+
+// ── State ──
+let currentPeriod = 30;
+let currentView = 'relative'; // 'relative' | 'normalized'
+let highlightedCoin = null; // null = all visible
+let allData = {};
+
+function regenerateData() {
+  allData = {};
+  COINS.forEach(c => {
+    allData[c.sym] = generateRelativeData(c, currentPeriod);
+  });
+}
+
+// ── Drawing ──
+function drawChart() {
+  const canvas = document.getElementById('mainChart');
+  const container = document.getElementById('chartContainer');
+  const rect = container.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 2;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  // Margins
+  const ml = 40, mr = 10, mt = 16, mb = 24;
+  const cw = W - ml - mr;
+  const ch = H - mt - mb;
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  // Find global min/max
+  let gMin = 0, gMax = 0;
+  COINS.forEach(c => {
+    const d = allData[c.sym];
+    if (!d) return;
+    d.forEach(v => {
+      if (v < gMin) gMin = v;
+      if (v > gMax) gMax = v;
+    });
+  });
+  // Add padding
+  const range = gMax - gMin || 1;
+  gMin -= range * 0.08;
+  gMax += range * 0.08;
+
+  // Y-axis helper
+  const yForVal = v => mt + ch * (1 - (v - gMin) / (gMax - gMin));
+  const xForIdx = i => ml + (i / (currentPeriod - 1)) * cw;
+
+  // Grid lines
+  ctx.strokeStyle = '#2c2c2e';
+  ctx.lineWidth = 0.5;
+  const gridSteps = 6;
+  ctx.font = '10px -apple-system';
+  ctx.fillStyle = '#636366';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= gridSteps; i++) {
+    const val = gMin + (gMax - gMin) * (1 - i / gridSteps);
+    const y = mt + ch * (i / gridSteps);
+    ctx.beginPath();
+    ctx.moveTo(ml, y);
+    ctx.lineTo(W - mr, y);
+    ctx.stroke();
+    const label = val >= 0 ? '+' + val.toFixed(1) + '%' : val.toFixed(1) + '%';
+    ctx.fillText(label, ml - 4, y + 3);
+  }
+
+  // Zero line (BTC baseline)
+  const zeroY = yForVal(0);
+  if (zeroY >= mt && zeroY <= mt + ch) {
+    ctx.strokeStyle = '#8e8e93';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(ml, zeroY);
+    ctx.lineTo(W - mr, zeroY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // BTC label
+    ctx.fillStyle = '#8e8e93';
+    ctx.textAlign = 'left';
+    ctx.font = '9px -apple-system';
+    ctx.fillText('BTC', ml + 2, zeroY - 4);
+  }
+
+  // X-axis labels
+  ctx.fillStyle = '#636366';
+  ctx.textAlign = 'center';
+  ctx.font = '10px -apple-system';
+  const xLabels = currentPeriod <= 14 ? 7 : currentPeriod <= 30 ? 6 : 5;
+  for (let i = 0; i <= xLabels; i++) {
+    const dayIdx = Math.floor((currentPeriod - 1) * i / xLabels);
+    const daysAgo = currentPeriod - 1 - dayIdx;
+    const x = xForIdx(dayIdx);
+    const label = daysAgo === 0 ? '今天' : daysAgo + 'D前';
+    ctx.fillText(label, x, H - 6);
+  }
+
+  // Draw lines — dimmed first, highlighted last
+  const drawOrder = [];
+  COINS.forEach(c => {
+    const isDimmed = highlightedCoin && highlightedCoin !== c.sym;
+    drawOrder.push({ coin: c, dimmed: isDimmed });
+  });
+  // Sort: dimmed first, then normal, highlighted last
+  drawOrder.sort((a, b) => {
+    if (a.dimmed && !b.dimmed) return -1;
+    if (!a.dimmed && b.dimmed) return 1;
+    if (a.coin.sym === highlightedCoin) return 1;
+    if (b.coin.sym === highlightedCoin) return -1;
+    return 0;
+  });
+
+  drawOrder.forEach(({ coin, dimmed }) => {
+    const d = allData[coin.sym];
+    if (!d || d.length < 2) return;
+
+    ctx.strokeStyle = coin.color;
+    ctx.lineWidth = coin.sym === highlightedCoin ? 3 : (highlightedCoin ? 1 : 1.5);
+    ctx.globalAlpha = dimmed ? 0.1 : (coin.tag === 'sell' && !highlightedCoin ? 1 : (highlightedCoin === coin.sym ? 1 : 0.7));
+
+    ctx.beginPath();
+    d.forEach((v, i) => {
+      const x = xForIdx(i);
+      const y = yForVal(v);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // End label
+    if (!dimmed) {
+      const lastVal = d[d.length - 1];
+      const endX = xForIdx(d.length - 1);
+      const endY = yForVal(lastVal);
+      ctx.fillStyle = coin.color;
+      ctx.globalAlpha = dimmed ? 0.15 : 1;
+      ctx.font = 'bold 9px -apple-system';
+      ctx.textAlign = 'left';
+
+      // Avoid label overlap: slight offset
+      ctx.fillText(coin.sym, endX + 3, endY + 3);
+    }
+    ctx.globalAlpha = 1;
+  });
+
+  // Filled area for highlighted coin
+  if (highlightedCoin) {
+    const coin = COINS.find(c => c.sym === highlightedCoin);
+    const d = allData[highlightedCoin];
+    if (coin && d) {
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = coin.color;
+      ctx.beginPath();
+      ctx.moveTo(xForIdx(0), zeroY);
+      d.forEach((v, i) => ctx.lineTo(xForIdx(i), yForVal(v)));
+      ctx.lineTo(xForIdx(d.length - 1), zeroY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+// ── Legend ──
+function buildLegend() {
+  const grid = document.getElementById('legendGrid');
+  grid.innerHTML = '';
+  COINS.forEach(c => {
+    const d = allData[c.sym];
+    const lastVal = d ? d[d.length - 1] : 0;
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    if (highlightedCoin && highlightedCoin !== c.sym) item.classList.add('dimmed');
+    if (highlightedCoin === c.sym) item.classList.add('highlighted');
+
+    let tagHTML = '';
+    if (c.tag === 'sell') tagHTML = '<span class="l-tag sell">卖出</span>';
+    else if (c.tag === 'warn') tagHTML = '<span class="l-tag warn">预警</span>';
+    else if (c.tag === 'lead') tagHTML = '<span class="l-tag lead">领涨</span>';
+
+    const valColor = lastVal >= 0 ? 'var(--green)' : 'var(--red)';
+    const valStr = (lastVal >= 0 ? '+' : '') + lastVal.toFixed(1) + '%';
+
+    item.innerHTML = `
+      <div class="l-dot" style="background:${c.color}"></div>
+      <span class="l-sym">${c.sym}</span>
+      <span class="l-val" style="color:${valColor}">${valStr}</span>
+      ${tagHTML}
+    `;
+
+    // Single click: focus this coin
+    item.addEventListener('click', () => {
+      if (highlightedCoin === c.sym) {
+        highlightedCoin = null;
+      } else {
+        highlightedCoin = c.sym;
+      }
+      drawChart();
+      buildLegend();
+    });
+
+    grid.appendChild(item);
+  });
+}
+
+function resetLegend() {
+  highlightedCoin = null;
+  drawChart();
+  buildLegend();
+}
+
+// ── Controls ──
+function setPeriod(days, btn) {
+  currentPeriod = days;
+  document.querySelectorAll('#periodBar .period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  regenerateData();
+  drawChart();
+  buildLegend();
+}
+
+function setView(mode, btn) {
+  currentView = mode;
+  document.querySelectorAll('#viewToggle .view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Regenerate with different base — for now both use relative
+  regenerateData();
+  drawChart();
+  buildLegend();
+}
+
+// ── Touch crosshair ──
+function setupTouch() {
+  const container = document.getElementById('chartContainer');
+  const tooltip = document.getElementById('tooltip');
+  const canvas = document.getElementById('mainChart');
+
+  let touching = false;
+
+  function showCrosshair(clientX) {
+    const rect = container.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const ml = 40, mr = 10;
+    const cw = rect.width - ml - mr;
+    const relX = (x - ml) / cw;
+    const dayIdx = Math.round(relX * (currentPeriod - 1));
+    if (dayIdx < 0 || dayIdx >= currentPeriod) {
+      tooltip.style.display = 'none';
+      return;
+    }
+
+    const daysAgo = currentPeriod - 1 - dayIdx;
+    const dateStr = daysAgo === 0 ? '今天' : `${daysAgo} 天前`;
+
+    // Gather values, sort by value desc
+    const entries = COINS.map(c => {
+      const d = allData[c.sym];
+      const val = d ? (d[dayIdx] || 0) : 0;
+      return { sym: c.sym, color: c.color, val };
+    }).sort((a, b) => b.val - a.val);
+
+    // Only show top 8 and highlighted if applicable
+    let shown = entries;
+    if (!highlightedCoin) {
+      shown = entries.slice(0, 8);
+    } else {
+      const hl = entries.find(e => e.sym === highlightedCoin);
+      shown = hl ? [hl] : entries.slice(0, 1);
+    }
+
+    tooltip.style.display = 'block';
+    tooltip.innerHTML = `
+      <div class="ch-date">📅 ${dateStr}</div>
+      <div class="ch-rows">
+        ${shown.map(e => {
+          const valStr = (e.val >= 0 ? '+' : '') + e.val.toFixed(1) + '%';
+          const valColor = e.val >= 0 ? 'var(--green)' : 'var(--red)';
+          return `<div class="ch-row">
+            <div class="ch-dot" style="background:${e.color}"></div>
+            <span class="ch-sym">${e.sym}</span>
+            <span class="ch-val" style="color:${valColor}">${valStr}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+
+    // Draw vertical line
+    drawChart();
+    const dpr = window.devicePixelRatio || 2;
+    const ctx = canvas.getContext('2d');
+    const lineX = ml + (dayIdx / (currentPeriod - 1)) * cw;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(142,142,147,0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(lineX * dpr / dpr, 16);
+    ctx.lineTo(lineX * dpr / dpr, rect.height - 24);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  container.addEventListener('touchstart', e => {
+    touching = true;
+    showCrosshair(e.touches[0].clientX);
+  }, { passive: true });
+
+  container.addEventListener('touchmove', e => {
+    if (touching) showCrosshair(e.touches[0].clientX);
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => {
+    touching = false;
+    tooltip.style.display = 'none';
+    drawChart();
+  });
+
+  // Mouse support for desktop
+  container.addEventListener('mousemove', e => {
+    showCrosshair(e.clientX);
+  });
+
+  container.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+    drawChart();
+  });
+}
+
+// ── Init ──
+regenerateData();
+drawChart();
+buildLegend();
+setupTouch();
+</script>
+
+</body>
+</html>

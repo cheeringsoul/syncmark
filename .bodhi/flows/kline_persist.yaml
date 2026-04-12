@@ -1,0 +1,21 @@
+name: kline_persist
+service: analyzer
+description: Consume kline events from collector, persist to PostgreSQL for historical analysis
+entry_point:
+  fn: KlineConsumer.run
+  type: long_running
+
+steps:
+  - fn: KlineConsumer.run
+    intent: XREADGROUP loop on cex:klines stream, dispatch each kline to KlineRepo.upsert
+    consumes:
+      - cex_kline(exchange, symbol, interval, open, high, low, close, volume, quote_volume, open_time, close_time) from redis:cex:klines
+    calls:
+      - KlineRepo.upsert
+
+  - fn: KlineRepo.upsert
+    intent: Upsert kline record, idempotent on unique constraint
+    writes:
+      - klines(exchange, symbol, interval, open, high, low, close, volume, quote_volume, open_time, close_time) via UPSERT
+    on_fail:
+      - duplicate → skip (idempotent)
